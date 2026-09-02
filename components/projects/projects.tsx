@@ -30,11 +30,11 @@ const PROJECTS: Project[] = [
   {
     id: "loom",
     icon: Sparkles,
-    iconLabel: "Fleetos",
+    iconLabel: "Multi-Tenant Logistics Management Platform",
     title:
-      "An AI writing companion that thinks alongside you, allowing you to capture ideas, edits, and drafts in one focused space.",
+      "Production-grade freight and logistics platform for dispatching loads, managing carriers, tracking shipments, and handling finances.",
     description:
-      "I designed Loom, a focused writing surface where ideas, edits, and drafts coexist without the chat clutter.",
+      "Multi-role logistics platform with isolated workspaces, secure JWT authentication, load dispatching, carrier management, live tracking, financial operations, reporting, and responsive UI.",
     meta: "Design Engineer, 2024",
     imageRatio: 752 / 497,
     image:
@@ -105,7 +105,7 @@ const PROJECTS: Project[] = [
     meta: "Independent Project, 2025",
     imageRatio: 1024 / 768,
     image:
-      "https://cdn.dribbble.com/userupload/16560717/file/original-c6f745d50302d66609bfe080f99f5396.png?resize=1024x768&vertical=center",
+      "/projects/yousuf-engineering.png",
     imageAlt: "Talkback friendlier AI chat interface mockup",
   },
 ];
