@@ -23,12 +23,12 @@ export function Hero(): ReactNode {
 
             <h1 className="text-foreground text-[2.35rem] leading-[1.05] font-medium tracking-tight md:text-[2.5rem] lg:text-[3.65rem]">
               <span className="block whitespace-nowrap">
-                Frontend engineer &
+                Frontend Engineer &
               </span>
-              <span className="block whitespace-nowrap">AI enthusiast</span>
+              <span className="block whitespace-nowrap">AI Enthusiast</span>
             </h1>
 
-            <p className="text-foreground/65 text-[1rem] max-w-[34ch] md:text-[1.125rem] leading-[1.4] text-justify tracking-tight">
+            <p className="text-foreground/65 text-[1rem] max-w-[40ch] md:text-[1.125rem] leading-[1.4] text-justify tracking-tight">
               Frontend Engineer with 3.3+ years of experience and 20+ professional projects across CRM, POS, and ERP systems. I build scalable, high-performance web applications with React, Next.js, and TypeScript, driven by strong problem-solving skills and 800+ solved programming problems. Passionate about AI, clean architecture, and building intuitive digital products.
             </p>
             <HeroCtas />

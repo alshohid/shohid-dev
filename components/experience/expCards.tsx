@@ -10,41 +10,61 @@ export interface ExperienceCard {
 export const expCards: ExperienceCard[] = [
     {
         review:
-            "At Betopia, Shohid is contributing as a Frontend Developer with a strong focus on polished UI, dependable delivery, and product-minded execution across live web experiences.",
-        imgPath: "/images/exp4.svg",
-        logoPath: "/images/logos/betopia.svg",
-        title: "Frontend Developer - Betopia",
-        date: "November 2026 - Present",
+            "Leading frontend development across multiple production projects, focusing on scalable architecture, polished user experiences, and reliable delivery.",
+
+        imgPath: "/softvence.png",
+        logoPath: "/softvence.png",
+        title: "Executive Frontend - Softvence Delta",
+        date: "October 2025 - Present",
+
         responsibilities: [
-            "Builds and improves user-facing product features with attention to responsiveness, usability, and clean interface behavior.",
-            "Works with product, design, and backend teammates to turn platform requirements into clear frontend experiences.",
-            "Maintains reusable UI structure and visual consistency across Betopia's web surfaces.",
+            "Lead frontend development across multiple projects using React, Next.js, TypeScript, and ShadCN UI.",
+
+            "Architect and deliver scalable, maintainable, and production-ready frontend applications.",
+
+            "Lead project implementation, code reviews, and frontend technical decisions.",
+
+            "Perform usability testing and resolve bugs to support ongoing production and maintenance.",
         ],
     },
+
     {
         review:
-            "Shohid brings strong visual judgment and frontend discipline to every build. He balances polish, responsiveness, and maintainable structure in a way that helps products feel premium in the browser.",
-        imgPath: "/images/exp2.png",
-        logoPath: "/images/logo2.png",
-        title: "Frontend Developer",
-        date: "November 2024 - December 2025",
+            "Developed and maintained production frontend experiences for DARTSLIVE, with a focus on reusable architecture, responsive interfaces, and reliable live application delivery.",
+
+        imgPath: "/exp2.png",
+        logoPath: "/logo2.png",
+        title: "Front End Engineer - Polygon Technology",
+        date: "September 2024 - October 2025",
+
         responsibilities: [
-            "Built user-facing product features with a focus on smooth interaction and responsive behavior.",
-            "Worked closely with design and product direction to translate ideas into reliable frontend delivery.",
-            "Improved visual consistency and code quality across real-world interface work.",
+            "Architected scalable frontend interfaces for DARTSLIVE using JavaScript and reusable component architecture.",
+
+            "Built and maintained user-facing features for production web applications.",
+
+            "Collaborated with the team to deliver reliable frontend solutions for live products.",
+
+            "Performed usability testing and resolved frontend bugs to improve application stability.",
         ],
     },
+
     {
         review:
-            "From internal tooling to user-facing experiences, Shohid consistently approaches delivery with practical problem-solving and close attention to detail.",
-        imgPath: "/images/exp1.png",
-        logoPath: "/images/logo1.png",
-        title: "Frontend Developer (On-site)",
-        date: "August 2023 - October 2024",
+            "Worked across frontend and backend development for ERP software, delivering new features, resolving production issues, and supporting client-facing requirements.",
+
+        imgPath: "/exp1.png",
+        logoPath: "/logo1.png",
+        title: "Jr. Software Engineer - Celltron EMS",
+        date: "August 2023 - August 2024",
+
         responsibilities: [
-            "Delivered scalable frontend work that supported ongoing product and platform improvements.",
-            "Collaborated with backend engineers to align APIs, data flow, and UI behavior.",
-            "Contributed to cleaner implementation patterns and more reliable user journeys.",
+            "Worked as a full-stack developer on ERP software, implementing new features and resolving bugs based on business requirements.",
+
+            "Conducted R&D for new feature implementation and collaborated with the team to evaluate and select suitable solutions.",
+
+            "Worked across frontend and backend components to support end-to-end feature development.",
+
+            "Handled client communication and provided production support for deployed applications.",
         ],
     },
 ];
