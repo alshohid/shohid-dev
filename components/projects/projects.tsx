@@ -44,7 +44,7 @@ const PROJECTS: Project[] = [
   {
     id: "atlas",
     icon: Compass,
-    iconLabel: "Atlas Studio",
+    iconLabel: "REAL Timing Bidding System",
     title: "A two week brand and product sprint for a creative studio.",
     description:
       "End to end identity, marketing site, and a small product surface designed to feel quietly confident across every touchpoint.",
