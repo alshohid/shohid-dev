@@ -6,7 +6,6 @@ import {
   Gamepad2,
   Github,
   Layers,
-  LineChart,
   Sparkles,
   Wand2,
 } from "lucide-react";

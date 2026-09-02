@@ -23,11 +23,12 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Projects", href: "/projects" },
   { label: "About", href: "/about" },
+  { label: "Experience", href: "/experience" },
 ];
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false
   );
@@ -93,18 +94,16 @@ function NavThemeToggle(): ReactNode {
     >
       <span aria-hidden="true" className="relative h-4 w-4">
         <Sun
-          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${
-            mounted && isDark
+          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${mounted && isDark
               ? "rotate-0 scale-100 opacity-100"
               : "-rotate-90 scale-0 opacity-0"
-          }`}
+            }`}
         />
         <Moon
-          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${
-            mounted && !isDark
+          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${mounted && !isDark
               ? "rotate-0 scale-100 opacity-100"
               : "rotate-90 scale-0 opacity-0"
-          }`}
+            }`}
         />
       </span>
     </button>
