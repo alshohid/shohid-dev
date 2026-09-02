@@ -24,7 +24,7 @@ export function ContactCard(): ReactNode {
                 maskImage: CARD_FADE_MASK,
               }}
             >
-              <ShaderFlow scale={3} brightness={3}/>
+              <ShaderFlow scale={3} brightness={3} />
             </div>
 
             <div className="relative grid gap-8 p-6 sm:gap-10 sm:p-7 md:grid-cols-[1.2fr_1fr] md:items-stretch md:gap-6 md:p-6">
@@ -42,12 +42,12 @@ export function ContactCard(): ReactNode {
               <div className="border-foreground/8 flex flex-col items-center justify-center gap-6 rounded-[1.1rem] border bg-background p-6 sm:p-8">
                 <div className="flex items-center gap-3 opacity-75">
                   <SocialIcon
-                    href="mailto:hello@example.com"
+                    href="mailto:shohidullah1112@student.nstu.edu.bd"
                     label="Email"
                     lucideIcon={Mail}
                   />
                   <SocialIcon
-                    href="https://www.linkedin.com"
+                    href="https://www.linkedin.com/in/alshohid"
                     label="LinkedIn"
                     imageSrc="/linkedin.svg"
                   />
@@ -62,7 +62,7 @@ export function ContactCard(): ReactNode {
                     2026 &copy; Built with Next.js
                   </p>
                   <p className="text-[12px] tracking-tight text-foreground/45">
-                    By React Bits Pro
+                    By <a href="https://github.com/alshohid" className="underline">Shoihidullah</a>
                   </p>
                 </div>
               </div>

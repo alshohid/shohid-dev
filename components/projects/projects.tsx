@@ -106,18 +106,18 @@ const PROJECTS: Project[] = [
   {
     id: "fieldnote",
     icon: Layers,
-    iconLabel: "Fieldnote",
+    iconLabel: "DartsLive",
     title:
-      "A pocket sized research tool for design teams that want to get out of their docs and into the world.",
+      "A connected darts platform built for players, leagues, and competitive play.",
     description:
-      "Capture quotes, tag patterns, and synthesize themes in one place. The interface stays out of the way so the thinking can happen.",
+      "Designed for the DARTSLIVE ecosystem, the platform brings together online matches, player performance, league information, and real-time competition into one engaging digital experience..",
     meta: "Design Engineer, 2024",
-    techStack: ["Next.js 16 ", "TypeScript", "Socket.io", "Redux Toolkit / RTK Query"],
-    githubUrl: "https://github.com/alshohid/fieldnote",
-    liveUrl: "https://fieldnote.example.com/",
+    techStack: ["Python ", "Django", "JavaScript", "Memechache", "Tailwind CSS"],
+    githubUrl: "https://www.dartslive.com/",
+    liveUrl: "https://www.dartslive.com/",
     imageRatio: 1024 / 768,
     image: "/projects/dartslive.png",
-    imageAlt: "Fieldnote pocket sized research tool mockup",
+    imageAlt: "DartsLive connected darts platform mockup",
   },
   {
     id: "talkback",

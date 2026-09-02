@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const siteConfig = {
-  name: "Portfolio",
+  name: "Shoihidullah's Portfolio",
   description:
     "A modern, accessible portfolio template built with Next.js, Tailwind CSS, and TypeScript.",
   url: "https://example.com",
@@ -9,7 +9,7 @@ export const siteConfig = {
   creator: "@yourhandle",
   authors: [
     {
-      name: "Your Name",
+      name: "Shoihidullah",
       url: "https://example.com",
     },
   ],
