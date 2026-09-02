@@ -1,5 +1,4 @@
-import { Education } from "@/components/about/education";
-import { Experience } from "@/components/about/experience";
+
 import { PolaroidStrip } from "@/components/about/polaroid-strip";
 import { Skills } from "@/components/about/skills";
 import { Stack } from "@/components/about/stack";
