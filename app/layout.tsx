@@ -2,6 +2,7 @@ import { Nav } from "@/components/layout/nav";
 import { PageBackdrop } from "@/components/layout/page-backdrop";
 import { Providers } from "@/components/layout/providers";
 import { SkipToContent } from "@/components/layout/skip-to-content";
+import { PortfolioChat } from "@/components/ai/portfolio-chat";
 import { baseMetadata } from "@/lib/metadata";
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
@@ -63,6 +64,7 @@ export default function RootLayout({
           <PageBackdrop />
           <Nav />
           {children}
+          <PortfolioChat />
         </Providers>
       </body>
     </html>

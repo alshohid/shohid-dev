@@ -16,14 +16,16 @@ import {
 
 type NavItem = {
   label: string;
+  shortLabel?: string;
   href: string;
 };
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: "Home", href: "/" },
-  { label: "Projects", href: "/projects" },
-  { label: "About", href: "/about" },
-  { label: "Experience", href: "/experience" },
+  { label: "Home", shortLabel: "Home", href: "/" },
+  { label: "Projects", shortLabel: "Projects", href: "/projects" },
+  { label: "AI Lab ✨", shortLabel: "AI Lab", href: "/ai-lab" },
+  { label: "About", shortLabel: "About", href: "/about" },
+  { label: "Experience", shortLabel: "Exp", href: "/experience" },
 ];
 
 function useIsMounted(): boolean {
@@ -90,20 +92,22 @@ function NavThemeToggle(): ReactNode {
           : "Toggle theme"
       }
       aria-pressed={mounted ? isDark : undefined}
-      className="focus-ring relative inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-background ring-1 ring-foreground/8 transition-colors"
+      className="focus-ring relative inline-flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-background ring-1 ring-foreground/8 transition-colors"
     >
-      <span aria-hidden="true" className="relative h-4 w-4">
+      <span aria-hidden="true" className="relative h-3.5 w-3.5 sm:h-4 sm:w-4">
         <Sun
-          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${mounted && isDark
+          className={`absolute inset-0 h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground transition-all duration-300 ${
+            mounted && isDark
               ? "rotate-0 scale-100 opacity-100"
               : "-rotate-90 scale-0 opacity-0"
-            }`}
+          }`}
         />
         <Moon
-          className={`absolute inset-0 h-4 w-4 text-foreground transition-all duration-300 ${mounted && !isDark
+          className={`absolute inset-0 h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground transition-all duration-300 ${
+            mounted && !isDark
               ? "rotate-0 scale-100 opacity-100"
               : "rotate-90 scale-0 opacity-0"
-            }`}
+          }`}
         />
       </span>
     </button>
@@ -126,7 +130,7 @@ export function Nav(): ReactNode {
       : pathname === item.href || pathname.startsWith(`${item.href}/`)
   );
 
-  useLayoutEffect(() => {
+  const updatePill = () => {
     const list = listRef.current;
     const activeEl =
       activeIndex >= 0 ? itemRefs.current[activeIndex] : null;
@@ -140,6 +144,16 @@ export function Nav(): ReactNode {
       x: itemRect.left - listRect.left,
       width: itemRect.width,
     });
+  };
+
+  useLayoutEffect(() => {
+    updatePill();
+  }, [activeIndex, pathname]);
+
+  useEffect(() => {
+    const handleResize = () => updatePill();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [activeIndex, pathname]);
 
   useEffect(() => {
@@ -151,10 +165,10 @@ export function Nav(): ReactNode {
   return (
     <nav
       aria-label="Primary"
-      className="fixed left-1/2 top-6 z-50 -translate-x-1/2"
+      className="fixed left-1/2 top-4 sm:top-6 z-50 -translate-x-1/2 max-w-[calc(100vw-1rem)] sm:max-w-none"
     >
-      <div className="flex items-center gap-1 rounded-full bg-background p-1.5 shadow-sm border border-foreground/8">
-        <ul ref={listRef} className="relative flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-background/95 p-1 sm:p-1.5 shadow-md border border-foreground/10 backdrop-blur-xl">
+        <ul ref={listRef} className="relative flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar">
           {pillRect && (
             <motion.span
               aria-hidden="true"
@@ -166,7 +180,7 @@ export function Nav(): ReactNode {
                   : { duration: 0 }
               }
               style={{ left: 0, top: 0, bottom: 0 }}
-              className="absolute rounded-full bg-foreground/5 ring-1 ring-foreground/8"
+              className="absolute rounded-full bg-foreground/8 ring-1 ring-foreground/12"
             />
           )}
           {NAV_ITEMS.map((item, index) => {
@@ -177,21 +191,22 @@ export function Nav(): ReactNode {
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                className="relative"
+                className="relative shrink-0"
               >
                 <Link
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className="focus-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-300"
+                  className="focus-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] xs:text-xs sm:text-sm font-medium transition-colors duration-300"
                 >
                   <span
                     className={
                       isActive
-                        ? "relative z-10 text-foreground"
-                        : "relative z-10 text-foreground/60 hover:text-foreground"
+                        ? "relative z-10 font-semibold text-foreground"
+                        : "relative z-10 text-foreground/65 hover:text-foreground"
                     }
                   >
-                    {item.label}
+                    <span className="hidden xs:inline">{item.label}</span>
+                    <span className="xs:hidden">{item.shortLabel || item.label}</span>
                   </span>
                 </Link>
               </li>
