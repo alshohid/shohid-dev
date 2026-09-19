@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -12,13 +12,19 @@ import {
   Check,
   RefreshCw,
   Zap,
-  Terminal,
+  FastForward,
+  Bot,
+  Sliders,
+  CheckCircle2,
+  FileCode2,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { FadeIn } from "@/components/ui/motion-primitives";
 
 type TabKey = "code-explainer" | "product-architect" | "recruiter-matcher";
 
-const SAMPLE_CODE = `// Real-Time Socket Hook in Next.js 16
+const SAMPLE_CODE = `// Real-Time Socket Hook in Next.js 16 & React 19
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -44,13 +50,13 @@ export function useRealtimeData<T>(channel: string) {
 }`;
 
 const SAMPLE_IDEAS = [
-  "Multi-tenant Logistics Freight Dispatch System with live GPS tracking",
-  "Real-time 1v1 Esports Tournament Bidding Platform with WebSockets",
-  "AI-powered Code Review & Automated PR Summarizer SaaS",
+  "Multi-tenant Freight Logistics Platform with live GPS tracking & sub-50ms WebSockets",
+  "Real-time 1v1 Esports Tournament Bidding Platform with live leaderboards & JWT auth",
+  "AI-powered Automated Code Review & Architectural PR Inspector SaaS",
 ];
 
 const SAMPLE_JDS = [
-  "Senior Full-Stack Engineer with 3+ years in Next.js, React 19, TypeScript, WebSockets, Redux Toolkit, and scalable UI design systems.",
+  "Senior Full-Stack Engineer with 3+ years in Next.js 16, React 19, TypeScript, WebSockets, Redux Toolkit, and scalable UI design systems.",
   "Lead Frontend Developer skilled in Tailwind CSS v4, Framer Motion animations, real-time dashboards, and WebGL integration.",
 ];
 
@@ -62,15 +68,66 @@ export default function AILabPage(): ReactNode {
   const [productIdea, setProductIdea] = useState<string>(SAMPLE_IDEAS[0] || "");
   const [jobDescription, setJobDescription] = useState<string>(SAMPLE_JDS[0] || "");
 
-  // Results & Loading
+  // Results, Streaming & Loading
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [fullResult, setFullResult] = useState<string | null>(null);
+  const [streamedOutput, setStreamedOutput] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const outputContainerRef = useRef<HTMLDivElement>(null);
+
+  // Typewriter streaming effect (ChatGPT-style)
+  const startStreaming = (text: string) => {
+    if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    setFullResult(text);
+    setStreamedOutput("");
+    setIsStreaming(true);
+
+    let currentIndex = 0;
+    const chunkSize = 4; // characters per tick
+    const speed = 14; // ms tick speed
+
+    streamIntervalRef.current = setInterval(() => {
+      currentIndex += chunkSize;
+      if (currentIndex >= text.length) {
+        setStreamedOutput(text);
+        setIsStreaming(false);
+        if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+      } else {
+        setStreamedOutput(text.slice(0, currentIndex));
+      }
+    }, speed);
+  };
+
+  const skipStreaming = () => {
+    if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    if (fullResult) {
+      setStreamedOutput(fullResult);
+      setIsStreaming(false);
+    }
+  };
+
+  // Auto-scroll output container while streaming
+  useEffect(() => {
+    if (isStreaming && outputContainerRef.current) {
+      outputContainerRef.current.scrollTop = outputContainerRef.current.scrollHeight;
+    }
+  }, [streamedOutput, isStreaming]);
+
+  useEffect(() => {
+    return () => {
+      if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    };
+  }, []);
 
   const runTool = async (tool: TabKey, input: string) => {
     if (!input.trim() || loading) return;
     setLoading(true);
-    setResult(null);
+    setFullResult(null);
+    setStreamedOutput("");
+    setIsStreaming(false);
 
     try {
       const res = await fetch("/api/ai-lab", {
@@ -79,68 +136,78 @@ export default function AILabPage(): ReactNode {
         body: JSON.stringify({ tool, input }),
       });
       const data = await res.json();
-      setResult(data.result || data.error || "Failed to get AI output.");
+      const outputText = data.result || data.error || "Failed to generate AI output.";
+      startStreaming(outputText);
     } catch (err) {
       console.error(err);
-      setResult("Error processing AI request. Please try again.");
+      const errMsg = "Error communicating with AI Lab server. Please try again.";
+      startStreaming(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
   const copyToClipboard = () => {
-    if (!result) return;
-    navigator.clipboard.writeText(result);
+    if (!streamedOutput) return;
+    navigator.clipboard.writeText(streamedOutput);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const lineCount = codeSnippet.split("\n").length;
+
   return (
-    <main id="main-content" className="mx-auto w-full max-w-275 px-6 pt-32 pb-24 sm:px-10 sm:pt-40">
+    <main id="main-content" className="mx-auto w-full max-w-275 px-6 pt-28 pb-24 sm:px-10 sm:pt-36">
       {/* Hero Header */}
-      <FadeIn className="flex flex-col items-center text-center gap-4 mb-12 sm:mb-16">
-        <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-4 py-1.5 text-xs font-semibold text-foreground/80 shadow-sm">
+      <FadeIn className="flex flex-col items-center text-center gap-4 mb-10 sm:mb-14">
+        <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-4 py-1.5 text-xs font-semibold text-foreground/80 shadow-xs backdrop-blur-sm">
           <Sparkles className="h-3.5 w-3.5 text-amber-500 animate-pulse" />
-          <span>Interactive AI Lab & Workbench</span>
-          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-600 dark:text-emerald-400">
-            Shohid Intelligence Core
+          <span>Shohid Intelligence Studio</span>
+          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+            v2.5 Neural Engine
           </span>
         </div>
 
         <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight text-foreground">
-          Live AI Showcase
+          Interactive AI Workbench
         </h1>
-        <p className="max-w-[42ch] text-base sm:text-lg text-foreground/65 leading-relaxed">
-          Test real-time AI capabilities built into Shohid&apos;s portfolio. Run code analysis, product blueprinting, and job matching live.
+        <p className="max-w-[44ch] text-base sm:text-lg text-foreground/65 leading-relaxed">
+          Test real-time code analysis, system architectural blueprints, and job description matching powered by Shohid&apos;s custom AI engine.
         </p>
       </FadeIn>
 
-      {/* Tabs Navigation */}
-      <FadeIn delay={0.1} className="mb-8 flex justify-center">
-        <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-foreground/10 bg-background/80 p-1.5 shadow-sm backdrop-blur-md">
+      {/* Tabs Navigation Bar */}
+      <FadeIn delay={0.08} className="mb-8 flex justify-center">
+        <div className="relative flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-foreground/12 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
           <button
             type="button"
             onClick={() => {
               setActiveTab("code-explainer");
-              setResult(null);
+              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+              setIsStreaming(false);
+              setStreamedOutput("");
+              setFullResult(null);
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium transition-all ${
+            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "code-explainer"
                 ? "bg-foreground text-background shadow-md"
                 : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
             }`}
           >
             <Code2 className="h-4 w-4" />
-            Code Explainer
+            Code Explainer & Optimizer
           </button>
 
           <button
             type="button"
             onClick={() => {
               setActiveTab("product-architect");
-              setResult(null);
+              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+              setIsStreaming(false);
+              setStreamedOutput("");
+              setFullResult(null);
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium transition-all ${
+            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "product-architect"
                 ? "bg-foreground text-background shadow-md"
                 : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
@@ -154,9 +221,12 @@ export default function AILabPage(): ReactNode {
             type="button"
             onClick={() => {
               setActiveTab("recruiter-matcher");
-              setResult(null);
+              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+              setIsStreaming(false);
+              setStreamedOutput("");
+              setFullResult(null);
             }}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium transition-all ${
+            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeTab === "recruiter-matcher"
                 ? "bg-foreground text-background shadow-md"
                 : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
@@ -168,11 +238,11 @@ export default function AILabPage(): ReactNode {
         </div>
       </FadeIn>
 
-      {/* Tab Panels */}
-      <FadeIn delay={0.15}>
+      {/* Main Grid Workbench */}
+      <FadeIn delay={0.12}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Column - Input Controls */}
-          <div className="rounded-3xl border border-foreground/10 bg-background/90 p-6 shadow-sm backdrop-blur-sm flex flex-col gap-5">
+          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-6 shadow-md backdrop-blur-xl flex flex-col gap-5">
             <AnimatePresence mode="wait">
               {activeTab === "code-explainer" && (
                 <motion.div
@@ -184,38 +254,80 @@ export default function AILabPage(): ReactNode {
                 >
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Terminal className="h-4 w-4 text-foreground/70" />
-                      Paste TypeScript / React Code
+                      <FileCode2 className="h-4 w-4 text-emerald-500" />
+                      IDE Code Editor
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setCodeSnippet(SAMPLE_CODE)}
-                      className="text-[11px] text-foreground/60 hover:text-foreground underline underline-offset-2"
-                    >
-                      Load Sample
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCodeSnippet("")}
+                        title="Clear code"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-foreground/60 hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" /> Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCodeSnippet(SAMPLE_CODE)}
+                        title="Reset sample code"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-foreground/60 hover:text-foreground underline underline-offset-2 cursor-pointer"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Sample
+                      </button>
+                    </div>
                   </div>
 
-                  <textarea
-                    rows={12}
-                    value={codeSnippet}
-                    onChange={(e) => setCodeSnippet(e.target.value)}
-                    placeholder="// Paste code snippet here..."
-                    className="w-full rounded-2xl border border-foreground/12 bg-foreground/[0.02] p-4 text-xs font-mono text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed"
-                  />
+                  {/* High-End IDE Editor Card with data-lenis-prevent */}
+                  <div
+                    data-lenis-prevent
+                    className="relative rounded-2xl border border-foreground/15 bg-foreground/[0.04] overflow-hidden shadow-inner flex flex-col"
+                  >
+                    {/* IDE Header Bar */}
+                    <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-2 bg-foreground/[0.05]">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                        <span className="ml-2 text-[11px] font-mono text-foreground/75 font-semibold flex items-center gap-1">
+                          main.ts
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-foreground/50">{lineCount} lines</span>
+                    </div>
+
+                    {/* Code Editor Body with Synchronized Line Numbers */}
+                    <div data-lenis-prevent className="flex h-72 sm:h-80 overflow-hidden relative">
+                      {/* Line Numbers Column */}
+                      <div className="select-none py-3 px-2 text-right text-[11px] font-mono text-foreground/30 border-r border-foreground/10 bg-foreground/[0.02] flex flex-col leading-relaxed min-w-[36px]">
+                        {Array.from({ length: Math.max(lineCount, 1) }, (_, i) => (
+                          <span key={i + 1}>{i + 1}</span>
+                        ))}
+                      </div>
+
+                      {/* Textarea Input with data-lenis-prevent & scroll */}
+                      <textarea
+                        data-lenis-prevent
+                        value={codeSnippet}
+                        onChange={(e) => setCodeSnippet(e.target.value)}
+                        placeholder="// Paste or type your code here..."
+                        style={{ touchAction: "pan-y" }}
+                        className="flex-1 bg-transparent p-3 text-xs font-mono text-foreground placeholder:text-foreground/40 focus:outline-none resize-none leading-relaxed overflow-y-auto overflow-x-auto whitespace-pre scrollbar-thin overscroll-contain"
+                      />
+                    </div>
+                  </div>
 
                   <button
                     type="button"
                     disabled={loading || !codeSnippet.trim()}
                     onClick={() => runTool("code-explainer", codeSnippet)}
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background shadow-md transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer"
+                    className="group relative flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-lg transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer overflow-hidden"
                   >
                     {loading ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
                       <Play className="h-4 w-4 transition-transform group-hover:scale-110" />
                     )}
-                    {loading ? "Analyzing Code..." : "Analyze & Optimize Code"}
+                    {loading ? "Analyzing AST & Logic..." : "Analyze & Optimize Code"}
                   </button>
                 </motion.div>
               )}
@@ -234,24 +346,30 @@ export default function AILabPage(): ReactNode {
                   </label>
 
                   <textarea
+                    data-lenis-prevent
                     rows={6}
                     value={productIdea}
                     onChange={(e) => setProductIdea(e.target.value)}
                     placeholder="e.g. A real-time AI collaborative editor with presence indicators..."
-                    className="w-full rounded-2xl border border-foreground/12 bg-foreground/[0.02] p-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed"
+                    style={{ touchAction: "pan-y" }}
+                    className="w-full rounded-2xl border border-foreground/15 bg-foreground/[0.03] p-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed shadow-inner overflow-y-auto scrollbar-thin max-h-48 overscroll-contain"
                   />
 
                   <div>
-                    <span className="block text-[12px] font-medium text-foreground/60 mb-2">
-                      Or pick a preset concept:
+                    <span className="block text-[12px] font-semibold text-foreground/70 mb-2">
+                      Preset Concepts:
                     </span>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       {SAMPLE_IDEAS.map((idea) => (
                         <button
                           key={idea}
                           type="button"
                           onClick={() => setProductIdea(idea)}
-                          className="text-left rounded-xl border border-foreground/8 bg-foreground/[0.02] p-2.5 text-xs text-foreground/80 hover:bg-foreground/5 hover:text-foreground transition-all"
+                          className={`text-left rounded-xl border p-3 text-xs font-medium transition-all cursor-pointer ${
+                            productIdea === idea
+                              ? "border-foreground/30 bg-foreground/10 text-foreground font-semibold"
+                              : "border-foreground/10 bg-foreground/[0.02] text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                          }`}
                         >
                           👉 {idea}
                         </button>
@@ -263,7 +381,7 @@ export default function AILabPage(): ReactNode {
                     type="button"
                     disabled={loading || !(productIdea || "").trim()}
                     onClick={() => runTool("product-architect", productIdea || "")}
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background shadow-md transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer"
+                    className="group relative flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-lg transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer overflow-hidden"
                   >
                     {loading ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
@@ -283,34 +401,38 @@ export default function AILabPage(): ReactNode {
                   exit={{ opacity: 0, x: 10 }}
                   className="flex flex-col gap-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-emerald-500" />
-                      Paste Job Description (JD)
-                    </label>
-                  </div>
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-emerald-500" />
+                    Paste Job Description (JD)
+                  </label>
 
                   <textarea
+                    data-lenis-prevent
                     rows={6}
                     value={jobDescription}
                     onChange={(e) => setJobDescription(e.target.value)}
                     placeholder="Paste job requirements here..."
-                    className="w-full rounded-2xl border border-foreground/12 bg-foreground/[0.02] p-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed"
+                    style={{ touchAction: "pan-y" }}
+                    className="w-full rounded-2xl border border-foreground/15 bg-foreground/[0.03] p-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed shadow-inner overflow-y-auto scrollbar-thin max-h-48 overscroll-contain"
                   />
 
                   <div>
-                    <span className="block text-[12px] font-medium text-foreground/60 mb-2">
-                      Or test with sample JD:
+                    <span className="block text-[12px] font-semibold text-foreground/70 mb-2">
+                      Sample Job Descriptions:
                     </span>
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       {SAMPLE_JDS.map((jd, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => setJobDescription(jd)}
-                          className="text-left rounded-xl border border-foreground/8 bg-foreground/[0.02] p-2.5 text-xs text-foreground/80 hover:bg-foreground/5 hover:text-foreground transition-all line-clamp-2"
+                          className={`text-left rounded-xl border p-3 text-xs font-medium transition-all cursor-pointer ${
+                            jobDescription === jd
+                              ? "border-foreground/30 bg-foreground/10 text-foreground font-semibold"
+                              : "border-foreground/10 bg-foreground/[0.02] text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                          }`}
                         >
-                          📋 Sample JD #{idx + 1}: {jd}
+                          📋 Sample #{idx + 1}: {jd}
                         </button>
                       ))}
                     </div>
@@ -320,7 +442,7 @@ export default function AILabPage(): ReactNode {
                     type="button"
                     disabled={loading || !(jobDescription || "").trim()}
                     onClick={() => runTool("recruiter-matcher", jobDescription || "")}
-                    className="group inline-flex items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-3 text-sm font-semibold text-background shadow-md transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer"
+                    className="group relative flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-lg transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer overflow-hidden"
                   >
                     {loading ? (
                       <RefreshCw className="h-4 w-4 animate-spin" />
@@ -334,60 +456,199 @@ export default function AILabPage(): ReactNode {
             </AnimatePresence>
           </div>
 
-          {/* Right Column - AI Output Display */}
-          <div className="rounded-3xl border border-foreground/10 bg-background/90 p-6 shadow-sm backdrop-blur-sm flex flex-col gap-4 min-h-[460px]">
-            <div className="flex items-center justify-between border-b border-foreground/8 pb-3">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" />
-                Shohid Intelligence Output
-              </h3>
+          {/* Right Column - ChatGPT-Style Streamed Output Display */}
+          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-6 shadow-md backdrop-blur-xl flex flex-col gap-4 min-h-[500px]">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-foreground/10 pb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-foreground text-background shadow-xs">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    Shohid AI Analysis Output
+                    {isStreaming && (
+                      <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                      </span>
+                    )}
+                  </h3>
+                </div>
+              </div>
 
-              {result && (
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-foreground/10 bg-background px-3 py-1 text-xs font-medium text-foreground/80 hover:bg-foreground/5 transition-colors cursor-pointer"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-3.5 w-3.5" />
-                      Copy Output
-                    </>
-                  )}
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {isStreaming && (
+                  <button
+                    type="button"
+                    onClick={skipStreaming}
+                    className="inline-flex items-center gap-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer"
+                  >
+                    <FastForward className="h-3 w-3" /> Skip Typing
+                  </button>
+                )}
+
+                {streamedOutput && (
+                  <button
+                    type="button"
+                    onClick={copyToClipboard}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-foreground/12 bg-background px-3 py-1 text-xs font-medium text-foreground/80 hover:bg-foreground/5 transition-colors cursor-pointer"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        Copy
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto rounded-2xl border border-foreground/8 bg-foreground/[0.02] p-5 text-sm leading-relaxed text-foreground scrollbar-thin">
+            {/* Scrollable Output Box */}
+            <div
+              ref={outputContainerRef}
+              data-lenis-prevent
+              className="flex-1 overflow-y-auto rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 text-sm leading-relaxed text-foreground scrollbar-thin relative min-h-[380px]"
+            >
               {loading ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center gap-3 text-foreground/50">
-                  <RefreshCw className="h-8 w-8 animate-spin text-foreground" />
-                  <p className="text-xs font-medium">Processing with Shohid Intelligence Engine...</p>
-                </div>
-              ) : result ? (
-                <div className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-normal">
-                  {result}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-64 text-center gap-3 text-foreground/40">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground/5">
-                    <Sparkles className="h-6 w-6" />
+                <div className="flex flex-col items-center justify-center h-80 text-center gap-3 text-foreground/60">
+                  <div className="relative">
+                    <div className="h-10 w-10 rounded-2xl border-2 border-foreground border-t-transparent animate-spin" />
+                    <Sparkles className="h-5 w-5 absolute inset-0 m-auto text-amber-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Select a tool on the left and click execute.</p>
-                    <p className="text-[11px] text-foreground/30 mt-0.5">Real-time response will render here.</p>
+                    <p className="text-xs font-semibold text-foreground">Executing Shohid AI Neural Analysis...</p>
+                    <p className="text-[11px] text-foreground/40 mt-0.5">Evaluating AST logic, Big-O complexity & production patterns</p>
+                  </div>
+                </div>
+              ) : streamedOutput ? (
+                <div className="space-y-3 font-sans text-xs sm:text-sm leading-relaxed">
+                  <RenderRichMarkdown text={streamedOutput} />
+                  {isStreaming && (
+                    <span className="inline-block h-4 w-2 bg-amber-500 animate-pulse ml-1 align-middle rounded-xs" />
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-80 text-center gap-3 text-foreground/40">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground/5 border border-foreground/10">
+                    <Sliders className="h-6 w-6 text-foreground/60" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Select a tool on the left and click analyze.</p>
+                    <p className="text-[11px] text-foreground/40 mt-1">ChatGPT-style streaming character output will render live here.</p>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Footer Metrics */}
+            {streamedOutput && (
+              <div className="flex items-center justify-between text-[10.5px] font-mono text-foreground/40 px-1 border-t border-foreground/5 pt-2">
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <CheckCircle2 className="h-3 w-3" /> Output Generated
+                </span>
+                <span>{streamedOutput.length} characters streamed</span>
+              </div>
+            )}
           </div>
         </div>
       </FadeIn>
     </main>
   );
+}
+
+// Custom Markdown & Code Block Renderer for AI Lab
+function RenderRichMarkdown({ text }: { text: string }): ReactNode {
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div className="space-y-2">
+      {parts.map((part, index) => {
+        if (part.startsWith("```") && part.endsWith("```")) {
+          const lines = part.slice(3, -3).trim().split("\n");
+          const lang = (lines[0] || "").trim();
+          const code = (lang ? lines.slice(1) : lines).join("\n");
+
+          return (
+            <div key={index} className="my-3 rounded-2xl border border-foreground/20 bg-foreground/95 text-background p-4 font-mono text-xs overflow-x-auto shadow-md">
+              <div className="flex items-center justify-between pb-2 border-b border-background/20 mb-2.5">
+                <span className="text-[10.5px] text-background/60 font-semibold uppercase tracking-wider">{lang || "code"}</span>
+                <span className="text-[10.5px] text-background/40">Refactored Code</span>
+              </div>
+              <pre className="whitespace-pre overflow-x-auto leading-relaxed text-background/95">
+                <code>{code}</code>
+              </pre>
+            </div>
+          );
+        }
+
+        const lines = part.split("\n");
+        return (
+          <div key={index} className="space-y-1.5">
+            {lines.map((line, lIdx) => {
+              if (!line.trim()) return <div key={lIdx} className="h-1" />;
+
+              if (line.startsWith("### ")) {
+                return (
+                  <h4 key={lIdx} className="text-sm font-bold text-foreground mt-4 mb-1.5 flex items-center gap-1.5 border-b border-foreground/8 pb-1">
+                    {line.replace("### ", "")}
+                  </h4>
+                );
+              }
+              if (line.startsWith("#### ")) {
+                return (
+                  <h5 key={lIdx} className="text-xs font-bold text-foreground mt-3 mb-1">
+                    {line.replace("#### ", "")}
+                  </h5>
+                );
+              }
+
+              const isBullet = line.trim().startsWith("- ") || line.trim().startsWith("* ");
+              const content = isBullet ? line.trim().substring(2) : line;
+
+              if (isBullet) {
+                return (
+                  <div key={lIdx} className="flex items-start gap-2 pl-1">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span>{parseFormattedInline(content)}</span>
+                  </div>
+                );
+              }
+
+              return <p key={lIdx} className="leading-relaxed">{parseFormattedInline(line)}</p>;
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function parseFormattedInline(str: string): ReactNode[] {
+  const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  const parts = str.split(regex);
+
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-semibold text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code key={i} className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[11.5px] text-foreground font-medium">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
 }
