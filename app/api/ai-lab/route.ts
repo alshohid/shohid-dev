@@ -54,36 +54,39 @@ Provide an optimized, clean, production-grade rewrite in a code block with expla
         }
       }
 
-      // Dynamic fallback analyzer that inspects the user's submitted snippet
       const dynamicResult = generateDynamicCodeAnalysis(input);
       return NextResponse.json({ result: dynamicResult });
     }
 
-    // 2. PRODUCT ARCHITECT
+    // 2. PRODUCT ARCHITECT (HIGH-ACCURACY BLUEPRINT ENGINE)
     if (tool === "product-architect") {
       if (apiKey) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const prompt = `You are a Principal Software Architect. Take this user-submitted product/feature concept: "${input}".
+          const prompt = `You are a Principal Enterprise Systems Architect. You are tasked with generating a 100% accurate, highly specific, production-grade architectural blueprint for the following concept:
 
-Provide a comprehensive, production-grade architectural blueprint formatted in Markdown:
+Product Concept: "${input}"
+
+You MUST tailor every single entity, schema, API route, technology choice, and database model specifically to "${input}". Do NOT use generic placeholders.
+
+Generate a comprehensive Markdown blueprint:
 ### 🏗️ Product Architectural Blueprint: "${input}"
-Brief overview of system goals and target scalability.
+**Executive Summary:** 2-sentence breakdown of system goals, target concurrency, and core value proposition.
 
-### 💻 Modern Tech Stack Selection
-- **Frontend Layer:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Framer Motion
-- **Backend & APIs:** Node.js/NestJS microservices or Next.js Route Handlers
-- **Data & Caching:** PostgreSQL / Redis Pub-Sub
-- **Real-time Protocol:** WebSockets / Socket.io / Server-Sent Events
+### 💻 Tailored Tech Stack & Architectural Layers
+- **Frontend Layer:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion
+- **API & Microservices:** Node.js/NestJS or Next.js Route Handlers + WebSockets / gRPC
+- **Database Layer:** PostgreSQL (Drizzle ORM) + Redis Pub/Sub caching
+- **Real-Time Protocol:** WebSockets / Socket.io / Server-Sent Events
 
-### 🗄️ Database Data Models & Schemas
-Provide TypeScript data model structures for core entities.
+### 🗄️ Core Database Models & TypeScript Schemas
+Write specific TypeScript interfaces representing the EXACT core data entities required for "${input}". Include primary keys, foreign key relations, and specific domain fields.
 
 ### 🌐 Key API Endpoints & Real-time Flow
-List essential REST/gRPC routes and WebSocket channel events.
+List 3-4 REST/gRPC endpoints and bi-directional WebSocket channels specifically named for "${input}".
 
 ### 🛡️ Security, Rate Limiting & Scalability Strategy
-Explain JWT validation, Redis token bucket rate limiting, and CDN caching strategy.`;
+Explain JWT session handling, Redis sliding-window rate limiting, CDN caching, and scaling bottlenecks.`;
 
           const res = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -160,7 +163,6 @@ function generateDynamicCodeAnalysis(input: string): string {
   const nonEmptyLines = rawLines.filter((l) => l.trim().length > 0);
   const codeLower = input.toLowerCase();
 
-  // 1. Detect Programming Language
   let lang = "TypeScript / JavaScript";
   if (codeLower.includes("def ") || codeLower.includes("import pandas") || codeLower.includes("print(")) {
     lang = "Python";
@@ -172,18 +174,16 @@ function generateDynamicCodeAnalysis(input: string): string {
     lang = "C++";
   } else if (codeLower.includes("public class ") || codeLower.includes("system.out")) {
     lang = "Java";
-  } else if (codeLower.includes("<div") || codeLower.includes("<h1") || codeLower.includes("className=")) {
+  } else if (codeLower.includes("<div") || codeLower.includes("<h1") || codeLower.includes("classname=")) {
     lang = "React TSX / JSX";
   }
 
-  // 2. Extract Function and Symbol Names dynamically
   const fnMatches = input.match(/(?:function|const|let|var|def|func|class)\s+([a-zA-Z0-9_$]+)/g) || [];
   const extractedSymbols = fnMatches
     .map((m) => m.replace(/^(function|const|let|var|def|func|class)\s+/, "").trim())
     .filter(Boolean);
   const mainSymbol = extractedSymbols[0] || "CustomLogicHandler";
 
-  // 3. Complexity Calculation
   let timeComplexity = "O(n)";
   let spaceComplexity = "O(1)";
   let complexityReason = "Single linear iteration over data collection.";
@@ -204,7 +204,6 @@ function generateDynamicCodeAnalysis(input: string): string {
     complexityReason = "Constant time execution flow without unbounded loops.";
   }
 
-  // 4. Dynamic Pitfalls Detection
   const pitfalls: string[] = [];
   if (codeLower.includes("useeffect") && !codeLower.includes("[]") && !codeLower.includes("dependenc")) {
     pitfalls.push("📌 **Missing Hook Dependencies:** `useEffect` declared without dependency array causes execution on every render cycle.");
@@ -222,13 +221,11 @@ function generateDynamicCodeAnalysis(input: string): string {
     pitfalls.push(`📌 **Boundary Check Recommendation:** Ensure non-null assertions on parameters passed to \`${mainSymbol}\` are validated before property access.`);
   }
 
-  // 5. Line Highlights
   const sampleHighlights = nonEmptyLines
     .slice(0, 4)
     .map((l, i) => `- **Line ${i + 1}:** \`${l.trim().slice(0, 65)}\``)
     .join("\n");
 
-  // 6. Production Refactor Code Snippet
   const refactoredLines = nonEmptyLines.map((line, idx) => {
     if (idx === 0) return `${line} // ⚡ Optimized for Production`;
     if (line.includes("const ") || line.includes("let ")) return `  ${line.trim()} // Typed & scope validated`;
@@ -259,55 +256,82 @@ ${refactoredLines.join("\n")}
 }
 
 // ----------------------------------------------------------------------
-// Dynamic Product Blueprint Generator (Tailored to ANY user concept)
+// High-Accuracy Dynamic Product Blueprint Generator (Tailored to ANY concept)
 // ----------------------------------------------------------------------
 function generateDynamicProductBlueprint(input: string): string {
-  const ideaLower = input.toLowerCase();
+  const conceptLower = input.toLowerCase();
 
-  let domain = "SaaS & Web Application";
-  if (ideaLower.includes("game") || ideaLower.includes("esports") || ideaLower.includes("gaming")) domain = "Real-Time Gaming & Tournament Engine";
-  else if (ideaLower.includes("logistics") || ideaLower.includes("freight") || ideaLower.includes("delivery")) domain = "Logistics & Fleet Operations Platform";
-  else if (ideaLower.includes("ai") || ideaLower.includes("bot") || ideaLower.includes("chat")) domain = "AI Agent & Intelligence Hub";
-  else if (ideaLower.includes("crypto") || ideaLower.includes("wallet") || ideaLower.includes("web3")) domain = "Web3 & Crypto Gateway System";
+  // Extract key words for entity naming
+  const words = input
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter((w) => w.length > 2);
+
+  const primaryName = capitalize(words[0] || "Product");
+  const secondaryName = capitalize(words[1] || "Item");
+
+  // Domain categorization & Schema building
+  let domain = "SaaS & Web Application Platform";
+  let schemaSnippet = "";
+  let endpointsSnippet = "";
+
+  if (conceptLower.includes("food") || conceptLower.includes("restaurant") || conceptLower.includes("delivery") || conceptLower.includes("order")) {
+    domain = "Food Delivery & On-Demand Order System";
+    schemaSnippet = `interface RestaurantProfile {\n  id: string;\n  name: string;\n  cuisineType: string[];\n  rating: number;\n  isOpen: boolean;\n}\n\ninterface FoodOrder {\n  id: string;\n  customerId: string;\n  restaurantId: string;\n  items: { itemId: string; quantity: number }[];\n  totalAmount: number;\n  status: "pending" | "preparing" | "in_transit" | "delivered";\n  deliveryDriverId?: string;\n  createdAt: Date;\n}`;
+    endpointsSnippet = `- \`POST /api/v1/orders/create\` - Place new food order & process payment\n- \`GET /api/v1/restaurants/search\` - Search open restaurants by location\n- \`WS /ws/delivery/track/:orderId\` - Live GPS telemetry for customer & courier`;
+  } else if (conceptLower.includes("game") || conceptLower.includes("esports") || conceptLower.includes("tournament") || conceptLower.includes("1v1")) {
+    domain = "Real-Time Esports & Gaming Platform";
+    schemaSnippet = `interface GamerProfile {\n  id: string;\n  username: string;\n  eloRating: number;\n  walletBalance: number;\n}\n\ninterface MatchLobby {\n  id: string;\n  player1Id: string;\n  player2Id?: string;\n  wagerAmount: number;\n  status: "waiting" | "in_progress" | "completed";\n  winnerId?: string;\n}`;
+    endpointsSnippet = `- \`POST /api/v1/matchmaking/join\` - Queue player into 1v1 match lobby\n- \`WS /ws/game/battle-state\` - Real-time sub-50ms battle sync\n- \`GET /api/v1/leaderboard/top\` - Paginated global Elo rankings`;
+  } else if (conceptLower.includes("logistics") || conceptLower.includes("freight") || conceptLower.includes("fleet") || conceptLower.includes("truck")) {
+    domain = "Multi-Tenant Freight & Logistics Dispatch System";
+    schemaSnippet = `interface CarrierVehicle {\n  id: string;\n  vinNumber: string;\n  driverId: string;\n  capacityTons: number;\n  currentLocation: { lat: number; lng: number };\n}\n\ninterface FreightLoad {\n  id: string;\n  originLocation: string;\n  destinationLocation: string;\n  rateDollars: number;\n  status: "unassigned" | "dispatched" | "delivered";\n}`;
+    endpointsSnippet = `- \`POST /api/v1/dispatch/load\` - Dispatch freight load to assigned driver\n- \`WS /ws/telemetry/gps\` - Stream vehicle GPS telemetry every 3 seconds\n- \`GET /api/v1/reports/revenue\` - Financial operations & ledger breakdown`;
+  } else if (conceptLower.includes("health") || conceptLower.includes("medical") || conceptLower.includes("hospital") || conceptLower.includes("doctor")) {
+    domain = "Healthcare & Telemedicine Management Platform";
+    schemaSnippet = `interface PatientMedicalRecord {\n  id: string;\n  patientName: string;\n  bloodGroup: string;\n  allergies: string[];\n}\n\ninterface AppointmentSession {\n  id: string;\n  patientId: string;\n  doctorId: string;\n  scheduledTime: Date;\n  status: "confirmed" | "completed" | "cancelled";\n}`;
+    endpointsSnippet = `- \`POST /api/v1/appointments/book\` - Schedule doctor consultation slot\n- \`GET /api/v1/patient/history\` - Encrypted medical records retrieval\n- \`WS /ws/telehealth/room\` - WebRTC signaling channel for video calls`;
+  } else if (conceptLower.includes("crypto") || conceptLower.includes("wallet") || conceptLower.includes("fintech") || conceptLower.includes("bank")) {
+    domain = "Fintech & Crypto Payment Gateway Engine";
+    schemaSnippet = `interface CryptoWallet {\n  id: string;\n  userId: string;\n  publicAddress: string;\n  balanceUSDT: number;\n}\n\ninterface TransactionLedger {\n  id: string;\n  fromAddress: string;\n  toAddress: string;\n  amount: number;\n  txHash: string;\n  status: "pending" | "confirmed";\n}`;
+    endpointsSnippet = `- \`POST /api/v1/wallet/transfer\` - Process crypto/fiat ledger transaction\n- \`WS /ws/market/orderbook\` - Real-time market price ticker stream\n- \`GET /api/v1/account/statement\` - Audit trail & transaction history`;
+  } else {
+    // Dynamic Custom Domain Generator for ANY generic concept!
+    schemaSnippet = `interface ${primaryName}Record {\n  id: string;\n  title: string;\n  category: string;\n  status: "draft" | "published" | "archived";\n  createdAt: Date;\n}\n\ninterface ${secondaryName}Item {\n  id: string;\n  ${primaryName.toLowerCase()}Id: string;\n  payload: Record<string, unknown>;\n  updatedAt: Date;\n}`;
+    endpointsSnippet = `- \`POST /api/v1/${primaryName.toLowerCase()}/create\` - Create new ${primaryName} entity\n- \`GET /api/v1/${primaryName.toLowerCase()}/search\` - Query & filter ${primaryName} records\n- \`WS /ws/${primaryName.toLowerCase()}/live-events\` - Real-time bi-directional update channel`;
+  }
 
   return `### 🏗️ Product Architectural Blueprint: "${input}"
 **Domain Category:** ${domain}  
-**Architecture Goal:** High-availability sub-50ms latency microservice deployment.
+**Target Concurrency:** 10,000+ Active Users | Sub-50ms Latency
 
-### 💻 Tailored Tech Stack Selection
+### 💻 Modern Tech Stack Selection
 - **Frontend Layer:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion
-- **Real-Time Data Engine:** WebSockets (Socket.io / Reverb) + Redis Pub/Sub for sub-50ms messaging
+- **Real-Time Data Engine:** WebSockets (Socket.io / Laravel Echo Reverb) + Redis Pub/Sub
 - **State & Data Management:** TanStack Query + Redux Toolkit / RTK Query
-- **Database & Cache:** PostgreSQL (Drizzle ORM) + Redis for session caching
+- **Database & Cache:** PostgreSQL (Drizzle ORM) + Redis for session caching & rate limiting
 - **Cloud Infrastructure:** Vercel Edge Network + Cloudflare Workers / Docker on GCP
 
-### 🗄️ Suggested Core Data Schemas
+### 🗄️ Core Database Models & TypeScript Schemas
 \`\`\`typescript
-interface UserProfile {
-  id: string;
-  email: string;
-  role: "admin" | "user" | "operator";
-  createdAt: Date;
-}
-
-interface ProductSession {
-  id: string;
-  concept: "${input.slice(0, 30)}...";
-  status: "active" | "completed";
-  updatedAt: Date;
-}
+${schemaSnippet}
 \`\`\`
 
-### 🌐 Essential API Endpoints & Real-time Flow
-- \`POST /api/v1/auth/session\` - Identity authentication & JWT token generation
-- \`GET /api/v1/data/stream\` - Scalable paginated resource fetching
-- \`WS /ws/realtime/broadcast\` - Bi-directional real-time event distribution
+### 🌐 Key API Endpoints & Real-time Flow
+${endpointsSnippet}
 
-### 🛡️ Security & Scalability Blueprint
+### 🛡️ Security, Rate Limiting & Scalability Strategy
 - **Rate Limiting:** Sliding-window algorithm powered by Redis (120 requests/min per IP).
 - **Security:** HTTP-only cookies, CORS origin restriction, and Zod input validation.
+- **Scaling Bottlenecks:** Database connection pooling (PgBouncer) + CDN edge caching for static assets.
 
-💡 *Blueprint generated by Shohid AI Architecture Engine for "${input.slice(0, 40)}..."*`;
+💡 *Blueprint generated specifically for "${input}" by Shohid AI Architecture Core!*`;
+}
+
+// Helper function
+function capitalize(str: string): string {
+  if (!str) return "Item";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
 // ----------------------------------------------------------------------
@@ -316,7 +340,6 @@ interface ProductSession {
 function generateDynamicRecruiterMatch(input: string): string {
   const jdLower = input.toLowerCase();
 
-  // Dynamically extract detected technologies from user's JD
   const detectedTechs: string[] = [];
   if (jdLower.includes("react")) detectedTechs.push("React 19");
   if (jdLower.includes("next")) detectedTechs.push("Next.js 16");
@@ -331,7 +354,6 @@ function generateDynamicRecruiterMatch(input: string): string {
     detectedTechs.push("Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Full-Stack Development");
   }
 
-  // Calculate dynamic match score
   const matchScore = Math.min(98, 88 + detectedTechs.length * 2);
 
   return `### 🎯 Executive Match Score: 🌟 ${matchScore}% Match
