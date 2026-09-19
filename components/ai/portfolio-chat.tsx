@@ -216,14 +216,14 @@ export function PortfolioChat(): ReactNode {
 
   return (
     <>
-      {/* Floating Action Launcher Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Action Launcher Button (Hidden on Mobile when Chat is Open) */}
+      <div className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 ${isOpen ? "hidden sm:block" : "block"}`}>
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Open Shohid AI Assistant"
-          className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_10px_30px_rgba(0,0,0,0.3)] ring-2 ring-foreground/20 backdrop-blur-md transition-all duration-300 cursor-pointer"
+          className="group relative flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_10px_30px_rgba(0,0,0,0.3)] ring-2 ring-foreground/20 backdrop-blur-md transition-all duration-300 cursor-pointer"
         >
           {/* Subtle Ambient Pulse Ring */}
           <span className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500 via-purple-500 to-indigo-500 opacity-20 blur-md group-hover:opacity-40 transition-opacity" />
@@ -260,21 +260,24 @@ export function PortfolioChat(): ReactNode {
         </motion.button>
       </div>
 
-      {/* Floating Chat Modal Panel */}
+      {/* Floating Chat Modal Panel (Bottom-Sheet Attached on Mobile, Desktop Floating) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.92 }}
+            initial={{ opacity: 0, y: 40, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            exit={{ opacity: 0, y: 40, scale: 0.94 }}
+            transition={{ type: "spring", stiffness: 380, damping: 32 }}
             data-lenis-prevent
-            className="fixed bottom-24 right-3 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-[420px] max-w-[420px] rounded-3xl border border-foreground/15 bg-background/95 shadow-[0_20px_60px_rgba(0,0,0,0.3)] backdrop-blur-2xl flex flex-col overflow-hidden h-[560px] max-h-[82vh]"
+            className="fixed bottom-0 left-0 right-0 sm:bottom-24 sm:left-auto sm:right-6 z-50 w-full sm:w-[420px] max-w-full sm:max-w-[420px] rounded-t-3xl sm:rounded-3xl border-t border-x sm:border border-foreground/15 bg-background/95 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] sm:shadow-[0_20px_60px_rgba(0,0,0,0.3)] backdrop-blur-2xl flex flex-col overflow-hidden h-[88vh] sm:h-[580px] max-h-[88vh] sm:max-h-[85vh]"
           >
+            {/* Mobile Top Drag Indicator Pill */}
+            <div className="sm:hidden w-10 h-1 bg-foreground/20 rounded-full mx-auto mt-2 mb-0.5 shrink-0" />
+
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-foreground/10 px-4 sm:px-5 py-3.5 bg-foreground/[0.03]">
+            <div className="flex items-center justify-between border-b border-foreground/10 px-4 sm:px-5 py-2.5 sm:py-3.5 bg-foreground/[0.03] shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-foreground via-foreground/90 to-foreground/80 text-background font-bold shadow-md">
+                <div className="relative flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-foreground via-foreground/90 to-foreground/80 text-background font-bold shadow-md">
                   <Bot className="h-4 sm:h-5 w-4 sm:w-5" />
                   <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                 </div>
@@ -286,7 +289,7 @@ export function PortfolioChat(): ReactNode {
                       v2.5 Live Core
                     </span>
                   </h3>
-                  <p className="text-[10.5px] sm:text-[11px] text-foreground/60">Portfolio & Tech Assistant</p>
+                  <p className="text-[10px] sm:text-[11px] text-foreground/60">Portfolio & Tech Assistant</p>
                 </div>
               </div>
 
@@ -299,13 +302,23 @@ export function PortfolioChat(): ReactNode {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
+                {/* Minimize chevron on Desktop */}
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
                   title="Minimize chat"
-                  className="rounded-xl p-1.5 sm:p-2 text-foreground/50 hover:bg-foreground/8 hover:text-foreground transition-colors cursor-pointer"
+                  className="hidden sm:block rounded-xl p-1.5 sm:p-2 text-foreground/50 hover:bg-foreground/8 hover:text-foreground transition-colors cursor-pointer"
                 >
                   <ChevronDown className="h-5 w-5" />
+                </button>
+                {/* Mobile Top-Right Close Cross (X) Icon */}
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  title="Close chat"
+                  className="sm:hidden rounded-xl p-1.5 text-foreground/70 hover:bg-foreground/10 hover:text-foreground transition-colors cursor-pointer ml-1"
+                >
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -315,7 +328,7 @@ export function PortfolioChat(): ReactNode {
               ref={scrollContainerRef}
               onScroll={handleScroll}
               data-lenis-prevent
-              className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 sm:space-y-4 text-sm overscroll-contain relative scrollbar-thin"
+              className="flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-4 space-y-3 sm:space-y-4 text-sm overscroll-contain relative scrollbar-thin"
               style={{ touchAction: "pan-y" }}
             >
               {messages.map((msg) => (
@@ -379,29 +392,28 @@ export function PortfolioChat(): ReactNode {
                   exit={{ opacity: 0, y: 10 }}
                   type="button"
                   onClick={() => scrollToBottom(true)}
-                  className="absolute bottom-28 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background shadow-lg hover:scale-110 transition-transform cursor-pointer"
+                  className="absolute bottom-36 right-5 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background shadow-lg hover:scale-110 transition-transform cursor-pointer"
                 >
                   <ArrowDown className="h-4 w-4" />
                 </motion.button>
               )}
             </AnimatePresence>
 
-            {/* Quick Prompt Chips Container */}
-            <div
-              data-lenis-prevent
-              className="px-3.5 sm:px-4 py-2 border-t border-foreground/8 bg-foreground/[0.01]"
-            >
-              <div
-                data-lenis-prevent
-                className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs"
-                style={{ touchAction: "pan-x" }}
-              >
+            {/* Hot Topics 2x2 Grid Section */}
+            <div className="px-3 sm:px-4 py-2 border-t border-foreground/10 bg-foreground/[0.02] shrink-0">
+              <div className="flex items-center justify-between mb-1 px-0.5">
+                <span className="text-[9.5px] sm:text-[10px] font-bold tracking-wider text-foreground/60 uppercase flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+                  Hot Topics
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
                 {QUICK_PROMPTS.map((p) => (
                   <button
                     key={p.label}
                     type="button"
                     onClick={() => handleSend(p.query)}
-                    className="shrink-0 rounded-full border border-foreground/12 bg-background px-3 py-1 text-[11px] font-medium text-foreground/80 hover:bg-foreground hover:text-background transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="rounded-xl border border-foreground/12 bg-background hover:border-foreground/30 px-2.5 py-1.5 text-[10.5px] sm:text-[11px] font-medium text-foreground/85 hover:bg-foreground hover:text-background transition-all duration-200 cursor-pointer shadow-2xs text-left truncate"
                   >
                     {p.label}
                   </button>
@@ -410,7 +422,7 @@ export function PortfolioChat(): ReactNode {
             </div>
 
             {/* Input Form Bar */}
-            <div className="p-3 border-t border-foreground/10 bg-background">
+            <div className="p-2.5 sm:p-3 border-t border-foreground/10 bg-background shrink-0">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
