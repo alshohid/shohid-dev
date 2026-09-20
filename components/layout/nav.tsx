@@ -165,10 +165,10 @@ export function Nav(): ReactNode {
   return (
     <nav
       aria-label="Primary"
-      className="fixed left-1/2 top-4 sm:top-6 z-50 -translate-x-1/2 max-w-[calc(100vw-1rem)] sm:max-w-none"
+      className="fixed left-1/2 top-3 sm:top-5 z-50 -translate-x-1/2 max-w-[calc(100vw-1.25rem)] sm:max-w-none"
     >
-      <div className="flex items-center gap-0.5 sm:gap-1 rounded-full bg-background/95 p-1 sm:p-1.5 shadow-md border border-foreground/10 backdrop-blur-xl">
-        <ul ref={listRef} className="relative flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1 rounded-full bg-background/90 p-1 sm:p-1.5 shadow-lg border border-foreground/12 backdrop-blur-2xl">
+        <ul ref={listRef} className="relative flex items-center gap-0.5 sm:gap-1 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap">
           {pillRect && (
             <motion.span
               aria-hidden="true"
@@ -196,7 +196,7 @@ export function Nav(): ReactNode {
                 <Link
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className="focus-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] xs:text-xs sm:text-sm font-medium transition-colors duration-300"
+                  className="focus-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] xs:text-xs sm:text-sm font-medium transition-colors duration-300 select-none"
                 >
                   <span
                     className={

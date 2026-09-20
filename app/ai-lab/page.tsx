@@ -24,6 +24,12 @@ import { FadeIn } from "@/components/ui/motion-primitives";
 
 type TabKey = "code-explainer" | "product-architect" | "recruiter-matcher";
 
+const TABS: { id: TabKey; label: string; icon: typeof Code2 }[] = [
+  { id: "code-explainer", label: "Code Explainer & Optimizer", icon: Code2 },
+  { id: "product-architect", label: "Product Blueprint", icon: Cpu },
+  { id: "recruiter-matcher", label: "Recruiter Matcher", icon: UserCheck },
+];
+
 const SAMPLE_CODE = `// Real-Time Socket Hook in Next.js 16 & React 19
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
@@ -147,6 +153,14 @@ export default function AILabPage(): ReactNode {
     }
   };
 
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab);
+    if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    setIsStreaming(false);
+    setStreamedOutput("");
+    setFullResult(null);
+  };
+
   const copyToClipboard = () => {
     if (!streamedOutput) return;
     navigator.clipboard.writeText(streamedOutput);
@@ -157,7 +171,7 @@ export default function AILabPage(): ReactNode {
   const lineCount = codeSnippet.split("\n").length;
 
   return (
-    <main id="main-content" className="mx-auto w-full max-w-275 px-6 pt-28 pb-24 sm:px-10 sm:pt-36">
+    <main id="main-content" className="mx-auto w-full max-w-275 px-3.5 sm:px-10 pt-28 pb-24 sm:pt-36">
       {/* Hero Header */}
       <FadeIn className="flex flex-col items-center text-center gap-4 mb-10 sm:mb-14">
         <div className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-4 py-1.5 text-xs font-semibold text-foreground/80 shadow-xs backdrop-blur-sm">
@@ -177,64 +191,36 @@ export default function AILabPage(): ReactNode {
       </FadeIn>
 
       {/* Tabs Navigation Bar */}
-      <FadeIn delay={0.08} className="mb-8 flex justify-center">
-        <div className="relative flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-foreground/12 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("code-explainer");
-              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
-              setIsStreaming(false);
-              setStreamedOutput("");
-              setFullResult(null);
-            }}
-            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === "code-explainer"
-                ? "bg-foreground text-background shadow-md"
-                : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-            }`}
-          >
-            <Code2 className="h-4 w-4" />
-            Code Explainer & Optimizer
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("product-architect");
-              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
-              setIsStreaming(false);
-              setStreamedOutput("");
-              setFullResult(null);
-            }}
-            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === "product-architect"
-                ? "bg-foreground text-background shadow-md"
-                : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-            }`}
-          >
-            <Cpu className="h-4 w-4" />
-            Product Blueprint
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("recruiter-matcher");
-              if (isStreaming && streamIntervalRef.current) clearInterval(streamIntervalRef.current);
-              setIsStreaming(false);
-              setStreamedOutput("");
-              setFullResult(null);
-            }}
-            className={`relative z-10 flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              activeTab === "recruiter-matcher"
-                ? "bg-foreground text-background shadow-md"
-                : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-            }`}
-          >
-            <UserCheck className="h-4 w-4" />
-            Recruiter Matcher
-          </button>
+      <FadeIn delay={0.08} className="mb-8 flex justify-center w-full">
+        <div className="relative flex w-full max-w-xl sm:w-auto flex-col sm:flex-row items-stretch sm:items-center justify-center gap-1.5 rounded-2xl border border-foreground/12 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => handleTabChange(tab.id)}
+                className={`relative z-10 flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer select-none ${
+                  isActive
+                    ? "text-background"
+                    : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabBg"
+                    className="absolute inset-0 -z-10 rounded-xl bg-foreground shadow-md"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </FadeIn>
 
@@ -242,7 +228,7 @@ export default function AILabPage(): ReactNode {
       <FadeIn delay={0.12}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Column - Input Controls */}
-          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-6 shadow-md backdrop-blur-xl flex flex-col gap-5">
+          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-3.5 sm:p-6 shadow-md backdrop-blur-xl flex flex-col gap-5">
             <AnimatePresence mode="wait">
               {activeTab === "code-explainer" && (
                 <motion.div
@@ -283,7 +269,7 @@ export default function AILabPage(): ReactNode {
                     className="relative rounded-2xl border border-foreground/15 bg-foreground/[0.04] overflow-hidden shadow-inner flex flex-col"
                   >
                     {/* IDE Header Bar */}
-                    <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-2 bg-foreground/[0.05]">
+                    <div className="flex items-center justify-between border-b border-foreground/10 px-3 py-2 sm:px-4 bg-foreground/[0.05]">
                       <div className="flex items-center gap-2">
                         <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
                         <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
@@ -298,7 +284,7 @@ export default function AILabPage(): ReactNode {
                     {/* Code Editor Body with Synchronized Line Numbers */}
                     <div data-lenis-prevent className="flex h-72 sm:h-80 overflow-hidden relative">
                       {/* Line Numbers Column */}
-                      <div className="select-none py-3 px-2 text-right text-[11px] font-mono text-foreground/30 border-r border-foreground/10 bg-foreground/[0.02] flex flex-col leading-relaxed min-w-[36px]">
+                      <div className="select-none py-2.5 px-1 sm:py-3 sm:px-2 text-right text-[10px] sm:text-[11px] font-mono text-foreground/30 border-r border-foreground/10 bg-foreground/[0.02] flex flex-col leading-relaxed min-w-[28px] sm:min-w-[36px]">
                         {Array.from({ length: Math.max(lineCount, 1) }, (_, i) => (
                           <span key={i + 1}>{i + 1}</span>
                         ))}
@@ -311,7 +297,7 @@ export default function AILabPage(): ReactNode {
                         onChange={(e) => setCodeSnippet(e.target.value)}
                         placeholder="// Paste or type your code here..."
                         style={{ touchAction: "pan-y" }}
-                        className="flex-1 bg-transparent p-3 text-xs font-mono text-foreground placeholder:text-foreground/40 focus:outline-none resize-none leading-relaxed overflow-y-auto overflow-x-auto whitespace-pre scrollbar-thin overscroll-contain"
+                        className="flex-1 bg-transparent p-2.5 sm:p-3 text-xs font-mono text-foreground placeholder:text-foreground/40 focus:outline-none resize-none leading-relaxed overflow-y-auto overflow-x-auto whitespace-pre scrollbar-thin overscroll-contain"
                       />
                     </div>
                   </div>
@@ -457,7 +443,7 @@ export default function AILabPage(): ReactNode {
           </div>
 
           {/* Right Column - ChatGPT-Style Streamed Output Display */}
-          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-6 shadow-md backdrop-blur-xl flex flex-col gap-4 min-h-[500px]">
+          <div className="rounded-3xl border border-foreground/12 bg-background/95 p-3.5 sm:p-6 shadow-md backdrop-blur-xl flex flex-col gap-4 min-h-[500px]">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-foreground/10 pb-3.5">
               <div className="flex items-center gap-2">
@@ -514,7 +500,7 @@ export default function AILabPage(): ReactNode {
             <div
               ref={outputContainerRef}
               data-lenis-prevent
-              className="flex-1 overflow-y-auto rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-5 text-sm leading-relaxed text-foreground scrollbar-thin relative min-h-[380px]"
+              className="flex-1 overflow-y-auto rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-3.5 sm:p-5 text-sm leading-relaxed text-foreground scrollbar-thin relative min-h-[380px]"
             >
               {loading ? (
                 <div className="flex flex-col items-center justify-center h-80 text-center gap-3 text-foreground/60">
