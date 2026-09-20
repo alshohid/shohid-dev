@@ -58,29 +58,33 @@ Provide an optimized, clean, production-grade rewrite in a code block with expla
       return NextResponse.json({ result: dynamicResult });
     }
 
-    // 2. PRODUCT ARCHITECT (HIGH-ACCURACY BLUEPRINT ENGINE)
+    // 2. PRODUCT ARCHITECT (HIGH-ACCURACY BLUEPRINT & ERD ENGINE)
     if (tool === "product-architect") {
       if (apiKey) {
         try {
           const ai = new GoogleGenAI({ apiKey });
-          const prompt = `You are a Principal Enterprise Systems Architect. You are tasked with generating a 100% accurate, highly specific, production-grade architectural blueprint for the following concept:
+          const prompt = `You are a Principal Enterprise Database Architect & Systems Designer. You are tasked with generating a 100% accurate, highly specific, production-grade architectural blueprint for the following concept:
 
 Product Concept: "${input}"
 
-You MUST tailor every single entity, schema, API route, technology choice, and database model specifically to "${input}". Do NOT use generic placeholders.
+You MUST tailor every single entity, ERD relationship, database schema (PostgreSQL / Drizzle ORM), API route, and technology choice specifically to "${input}". Do NOT use generic placeholders.
 
-Generate a comprehensive Markdown blueprint:
+Generate a comprehensive Markdown blueprint with explicit ERD diagrams:
 ### 🏗️ Product Architectural Blueprint: "${input}"
-**Executive Summary:** 2-sentence breakdown of system goals, target concurrency, and core value proposition.
+**Domain Category:** Industry domain breakdown  
+**Target Concurrency:** 10,000+ Active Users | Sub-50ms Latency
+
+### 📊 Entity-Relationship Diagram (ERD)
+Provide a valid Mermaid \`erDiagram\` block representing all core database entities and their exact cardinalities (e.g., \`||--o{\`, \`||--|{\`, \`||--||\`) specifically required for "${input}".
+
+### 🗄️ Relational Database Schemas & DDL (PostgreSQL / Drizzle ORM)
+Provide comprehensive DDL SQL statements AND Drizzle ORM TypeScript table definitions representing the EXACT data entities. Highlight Primary Keys (PK), Foreign Keys (FK), indexes, and data types.
 
 ### 💻 Tailored Tech Stack & Architectural Layers
 - **Frontend Layer:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion
 - **API & Microservices:** Node.js/NestJS or Next.js Route Handlers + WebSockets / gRPC
 - **Database Layer:** PostgreSQL (Drizzle ORM) + Redis Pub/Sub caching
 - **Real-Time Protocol:** WebSockets / Socket.io / Server-Sent Events
-
-### 🗄️ Core Database Models & TypeScript Schemas
-Write specific TypeScript interfaces representing the EXACT core data entities required for "${input}". Include primary keys, foreign key relations, and specific domain fields.
 
 ### 🌐 Key API Endpoints & Real-time Flow
 List 3-4 REST/gRPC endpoints and bi-directional WebSocket channels specifically named for "${input}".
@@ -270,34 +274,211 @@ function generateDynamicProductBlueprint(input: string): string {
   const primaryName = capitalize(words[0] || "Product");
   const secondaryName = capitalize(words[1] || "Item");
 
-  // Domain categorization & Schema building
+  // Domain categorization, ERD & Schema building
   let domain = "SaaS & Web Application Platform";
-  let schemaSnippet = "";
+  let erdDiagramSnippet = "";
+  let ddlSqlSnippet = "";
+  let drizzleSchemaSnippet = "";
   let endpointsSnippet = "";
 
   if (conceptLower.includes("food") || conceptLower.includes("restaurant") || conceptLower.includes("delivery") || conceptLower.includes("order")) {
     domain = "Food Delivery & On-Demand Order System";
-    schemaSnippet = `interface RestaurantProfile {\n  id: string;\n  name: string;\n  cuisineType: string[];\n  rating: number;\n  isOpen: boolean;\n}\n\ninterface FoodOrder {\n  id: string;\n  customerId: string;\n  restaurantId: string;\n  items: { itemId: string; quantity: number }[];\n  totalAmount: number;\n  status: "pending" | "preparing" | "in_transit" | "delivered";\n  deliveryDriverId?: string;\n  createdAt: Date;\n}`;
+    erdDiagramSnippet = `erDiagram
+    USERS ||--o{ FOOD_ORDERS : places
+    RESTAURANTS ||--o{ MEAL_ITEMS : offers
+    RESTAURANTS ||--o{ FOOD_ORDERS : receives
+    FOOD_ORDERS ||--|{ ORDER_ITEMS : contains
+    MEAL_ITEMS ||--o{ ORDER_ITEMS : referenced_in
+    DRIVERS ||--o{ FOOD_ORDERS : delivers`;
+
+    ddlSqlSnippet = `CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  phone VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE restaurants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  cuisine_type TEXT[] NOT NULL,
+  rating NUMERIC(3,2) DEFAULT 5.00,
+  is_open BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE food_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  driver_id UUID REFERENCES users(id),
+  total_amount NUMERIC(10,2) NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending' NOT NULL, -- pending | preparing | in_transit | delivered
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_food_orders_customer ON food_orders(customer_id);
+CREATE INDEX idx_food_orders_status ON food_orders(status);`;
+
+    drizzleSchemaSnippet = `import { pgTable, uuid, varchar, numeric, boolean, timestamp, text } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fullName: varchar("full_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  phone: varchar("phone", { length: 20 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const restaurants = pgTable("restaurants", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  cuisineType: text("cuisine_type").array().notNull(),
+  rating: numeric("rating", { precision: 3, scale: 2 }).default("5.00"),
+  isOpen: boolean("is_open").default(true),
+});
+
+export const foodOrders = pgTable("food_orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").notNull().references(() => users.id),
+  restaurantId: uuid("restaurant_id").notNull().references(() => restaurants.id),
+  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});`;
+
     endpointsSnippet = `- \`POST /api/v1/orders/create\` - Place new food order & process payment\n- \`GET /api/v1/restaurants/search\` - Search open restaurants by location\n- \`WS /ws/delivery/track/:orderId\` - Live GPS telemetry for customer & courier`;
   } else if (conceptLower.includes("game") || conceptLower.includes("esports") || conceptLower.includes("tournament") || conceptLower.includes("1v1")) {
     domain = "Real-Time Esports & Gaming Platform";
-    schemaSnippet = `interface GamerProfile {\n  id: string;\n  username: string;\n  eloRating: number;\n  walletBalance: number;\n}\n\ninterface MatchLobby {\n  id: string;\n  player1Id: string;\n  player2Id?: string;\n  wagerAmount: number;\n  status: "waiting" | "in_progress" | "completed";\n  winnerId?: string;\n}`;
+    erdDiagramSnippet = `erDiagram
+    GAMER_PROFILES ||--o{ MATCH_LOBBIES : queues_in
+    MATCH_LOBBIES ||--|{ MATCH_ROUNDS : produces
+    GAMER_PROFILES ||--o{ TRANSACTIONS : executes
+    TOURNAMENTS ||--o{ MATCH_LOBBIES : hosts`;
+
+    ddlSqlSnippet = `CREATE TABLE gamer_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username VARCHAR(50) UNIQUE NOT NULL,
+  elo_rating INT DEFAULT 1200 NOT NULL,
+  wallet_balance NUMERIC(12,2) DEFAULT 0.00 NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE match_lobbies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player1_id UUID NOT NULL REFERENCES gamer_profiles(id),
+  player2_id UUID REFERENCES gamer_profiles(id),
+  wager_amount NUMERIC(10,2) NOT NULL,
+  status VARCHAR(30) DEFAULT 'waiting' NOT NULL,
+  winner_id UUID REFERENCES gamer_profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_match_lobbies_status ON match_lobbies(status);`;
+
+    drizzleSchemaSnippet = `import { pgTable, uuid, varchar, integer, numeric, timestamp } from "drizzle-orm/pg-core";
+
+export const gamerProfiles = pgTable("gamer_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  eloRating: integer("elo_rating").default(1200).notNull(),
+  walletBalance: numeric("wallet_balance", { precision: 12, scale: 2 }).default("0.00"),
+});
+
+export const matchLobbies = pgTable("match_lobbies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  player1Id: uuid("player1_id").notNull().references(() => gamerProfiles.id),
+  player2Id: uuid("player2_id").references(() => gamerProfiles.id),
+  wagerAmount: numeric("wager_amount", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 30 }).default("waiting").notNull(),
+  winnerId: uuid("winner_id").references(() => gamerProfiles.id),
+});`;
+
     endpointsSnippet = `- \`POST /api/v1/matchmaking/join\` - Queue player into 1v1 match lobby\n- \`WS /ws/game/battle-state\` - Real-time sub-50ms battle sync\n- \`GET /api/v1/leaderboard/top\` - Paginated global Elo rankings`;
   } else if (conceptLower.includes("logistics") || conceptLower.includes("freight") || conceptLower.includes("fleet") || conceptLower.includes("truck")) {
     domain = "Multi-Tenant Freight & Logistics Dispatch System";
-    schemaSnippet = `interface CarrierVehicle {\n  id: string;\n  vinNumber: string;\n  driverId: string;\n  capacityTons: number;\n  currentLocation: { lat: number; lng: number };\n}\n\ninterface FreightLoad {\n  id: string;\n  originLocation: string;\n  destinationLocation: string;\n  rateDollars: number;\n  status: "unassigned" | "dispatched" | "delivered";\n}`;
+    erdDiagramSnippet = `erDiagram
+    CARRIERS ||--o{ VEHICLES : owns
+    DRIVERS ||--o{ VEHICLES : operates
+    CARRIERS ||--o{ FREIGHT_LOADS : dispatches
+    FREIGHT_LOADS ||--o{ GPS_TELEMETRY : streams`;
+
+    ddlSqlSnippet = `CREATE TABLE carrier_vehicles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vin_number VARCHAR(17) UNIQUE NOT NULL,
+  driver_id UUID REFERENCES users(id),
+  capacity_tons NUMERIC(5,2) NOT NULL,
+  current_lat DOUBLE PRECISION,
+  current_lng DOUBLE PRECISION
+);
+
+CREATE TABLE freight_loads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  origin_location TEXT NOT NULL,
+  destination_location TEXT NOT NULL,
+  rate_dollars NUMERIC(10,2) NOT NULL,
+  status VARCHAR(30) DEFAULT 'unassigned' NOT NULL
+);`;
+
+    drizzleSchemaSnippet = `import { pgTable, uuid, varchar, numeric, text, doublePrecision } from "drizzle-orm/pg-core";
+
+export const carrierVehicles = pgTable("carrier_vehicles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  vinNumber: varchar("vin_number", { length: 17 }).notNull().unique(),
+  driverId: uuid("driver_id").references(() => users.id),
+  capacityTons: numeric("capacity_tons", { precision: 5, scale: 2 }).notNull(),
+  currentLat: doublePrecision("current_lat"),
+  currentLng: doublePrecision("current_lng"),
+});
+
+export const freightLoads = pgTable("freight_loads", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  originLocation: text("origin_location").notNull(),
+  destinationLocation: text("destination_location").notNull(),
+  rateDollars: numeric("rate_dollars", { precision: 10, scale: 2 }).notNull(),
+  status: varchar("status", { length: 30 }).default("unassigned").notNull(),
+});`;
+
     endpointsSnippet = `- \`POST /api/v1/dispatch/load\` - Dispatch freight load to assigned driver\n- \`WS /ws/telemetry/gps\` - Stream vehicle GPS telemetry every 3 seconds\n- \`GET /api/v1/reports/revenue\` - Financial operations & ledger breakdown`;
-  } else if (conceptLower.includes("health") || conceptLower.includes("medical") || conceptLower.includes("hospital") || conceptLower.includes("doctor")) {
-    domain = "Healthcare & Telemedicine Management Platform";
-    schemaSnippet = `interface PatientMedicalRecord {\n  id: string;\n  patientName: string;\n  bloodGroup: string;\n  allergies: string[];\n}\n\ninterface AppointmentSession {\n  id: string;\n  patientId: string;\n  doctorId: string;\n  scheduledTime: Date;\n  status: "confirmed" | "completed" | "cancelled";\n}`;
-    endpointsSnippet = `- \`POST /api/v1/appointments/book\` - Schedule doctor consultation slot\n- \`GET /api/v1/patient/history\` - Encrypted medical records retrieval\n- \`WS /ws/telehealth/room\` - WebRTC signaling channel for video calls`;
-  } else if (conceptLower.includes("crypto") || conceptLower.includes("wallet") || conceptLower.includes("fintech") || conceptLower.includes("bank")) {
-    domain = "Fintech & Crypto Payment Gateway Engine";
-    schemaSnippet = `interface CryptoWallet {\n  id: string;\n  userId: string;\n  publicAddress: string;\n  balanceUSDT: number;\n}\n\ninterface TransactionLedger {\n  id: string;\n  fromAddress: string;\n  toAddress: string;\n  amount: number;\n  txHash: string;\n  status: "pending" | "confirmed";\n}`;
-    endpointsSnippet = `- \`POST /api/v1/wallet/transfer\` - Process crypto/fiat ledger transaction\n- \`WS /ws/market/orderbook\` - Real-time market price ticker stream\n- \`GET /api/v1/account/statement\` - Audit trail & transaction history`;
   } else {
     // Dynamic Custom Domain Generator for ANY generic concept!
-    schemaSnippet = `interface ${primaryName}Record {\n  id: string;\n  title: string;\n  category: string;\n  status: "draft" | "published" | "archived";\n  createdAt: Date;\n}\n\ninterface ${secondaryName}Item {\n  id: string;\n  ${primaryName.toLowerCase()}Id: string;\n  payload: Record<string, unknown>;\n  updatedAt: Date;\n}`;
+    erdDiagramSnippet = `erDiagram
+    USER ||--o{ ${primaryName.toUpperCase()}_RECORD : owns
+    ${primaryName.toUpperCase()}_RECORD ||--|{ ${secondaryName.toUpperCase()}_ITEM : contains
+    ${primaryName.toUpperCase()}_RECORD ||--o{ AUDIT_LOG : generates`;
+
+    ddlSqlSnippet = `CREATE TABLE ${primaryName.toLowerCase()}_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  status VARCHAR(50) DEFAULT 'draft' NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE ${secondaryName.toLowerCase()}_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ${primaryName.toLowerCase()}_id UUID NOT NULL REFERENCES ${primaryName.toLowerCase()}_records(id) ON DELETE CASCADE,
+  payload JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE INDEX idx_${primaryName.toLowerCase()}_user ON ${primaryName.toLowerCase()}_records(user_id);`;
+
+    drizzleSchemaSnippet = `import { pgTable, uuid, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
+
+export const ${primaryName.toLowerCase()}Records = pgTable("${primaryName.toLowerCase()}_records", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).default("draft").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const ${secondaryName.toLowerCase()}Items = pgTable("${secondaryName.toLowerCase()}_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ${primaryName.toLowerCase()}Id: uuid("${primaryName.toLowerCase()}_id").notNull().references(() => ${primaryName.toLowerCase()}Records.id),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});`;
+
     endpointsSnippet = `- \`POST /api/v1/${primaryName.toLowerCase()}/create\` - Create new ${primaryName} entity\n- \`GET /api/v1/${primaryName.toLowerCase()}/search\` - Query & filter ${primaryName} records\n- \`WS /ws/${primaryName.toLowerCase()}/live-events\` - Real-time bi-directional update channel`;
   }
 
@@ -305,17 +486,27 @@ function generateDynamicProductBlueprint(input: string): string {
 **Domain Category:** ${domain}  
 **Target Concurrency:** 10,000+ Active Users | Sub-50ms Latency
 
+### 📊 Entity-Relationship Diagram (ERD)
+\`\`\`mermaid
+${erdDiagramSnippet}
+\`\`\`
+
+### 🗄️ Relational Database Schemas & DDL (PostgreSQL)
+\`\`\`sql
+${ddlSqlSnippet}
+\`\`\`
+
+#### Drizzle ORM TypeScript Definitions
+\`\`\`typescript
+${drizzleSchemaSnippet}
+\`\`\`
+
 ### 💻 Modern Tech Stack Selection
 - **Frontend Layer:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Framer Motion
 - **Real-Time Data Engine:** WebSockets (Socket.io / Laravel Echo Reverb) + Redis Pub/Sub
 - **State & Data Management:** TanStack Query + Redux Toolkit / RTK Query
 - **Database & Cache:** PostgreSQL (Drizzle ORM) + Redis for session caching & rate limiting
 - **Cloud Infrastructure:** Vercel Edge Network + Cloudflare Workers / Docker on GCP
-
-### 🗄️ Core Database Models & TypeScript Schemas
-\`\`\`typescript
-${schemaSnippet}
-\`\`\`
 
 ### 🌐 Key API Endpoints & Real-time Flow
 ${endpointsSnippet}
@@ -325,7 +516,7 @@ ${endpointsSnippet}
 - **Security:** HTTP-only cookies, CORS origin restriction, and Zod input validation.
 - **Scaling Bottlenecks:** Database connection pooling (PgBouncer) + CDN edge caching for static assets.
 
-💡 *Blueprint generated specifically for "${input}" by Shohid AI Architecture Core!*`;
+💡 *Blueprint & ERD Schema generated specifically for "${input}" by Shohid AI Architecture Core!*`;
 }
 
 // Helper function

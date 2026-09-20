@@ -560,12 +560,33 @@ function RenderRichMarkdown({ text }: { text: string }): ReactNode {
           const lines = part.slice(3, -3).trim().split("\n");
           const lang = (lines[0] || "").trim();
           const code = (lang ? lines.slice(1) : lines).join("\n");
+          const isMermaid = lang.toLowerCase() === "mermaid" || lang.toLowerCase() === "erdiagram" || lang.toLowerCase() === "er";
+          const isSql = lang.toLowerCase() === "sql";
+
+          if (isMermaid) {
+            return (
+              <div key={index} className="my-4 rounded-2xl border border-emerald-500/25 bg-emerald-950/20 dark:bg-emerald-950/40 p-4 font-mono text-xs overflow-x-auto shadow-md backdrop-blur-md">
+                <div className="flex items-center justify-between pb-2 border-b border-emerald-500/20 mb-3">
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                    📊 Entity-Relationship Diagram (ERD)
+                  </span>
+                  <span className="text-[10px] text-emerald-300/60 font-sans">Mermaid Schema</span>
+                </div>
+                <pre className="whitespace-pre overflow-x-auto leading-relaxed text-emerald-200/90 font-mono text-[11px] sm:text-xs p-2 bg-black/40 rounded-xl border border-emerald-500/10">
+                  <code>{code}</code>
+                </pre>
+              </div>
+            );
+          }
 
           return (
             <div key={index} className="my-3 rounded-2xl border border-foreground/20 bg-foreground/95 text-background p-4 font-mono text-xs overflow-x-auto shadow-md">
               <div className="flex items-center justify-between pb-2 border-b border-background/20 mb-2.5">
-                <span className="text-[10.5px] text-background/60 font-semibold uppercase tracking-wider">{lang || "code"}</span>
-                <span className="text-[10.5px] text-background/40">Refactored Code</span>
+                <span className="text-[10.5px] text-background/60 font-semibold uppercase tracking-wider">
+                  {isSql ? "🗄️ SQL DDL Schema" : lang || "code"}
+                </span>
+                <span className="text-[10.5px] text-background/40">Architectural Schema</span>
               </div>
               <pre className="whitespace-pre overflow-x-auto leading-relaxed text-background/95">
                 <code>{code}</code>
