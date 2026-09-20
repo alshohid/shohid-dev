@@ -19,14 +19,18 @@ import {
   FileCode2,
   Trash2,
   RotateCcw,
+  Palette,
+  Eye,
+  Code,
 } from "lucide-react";
 import { FadeIn } from "@/components/ui/motion-primitives";
 
-type TabKey = "code-explainer" | "product-architect" | "recruiter-matcher";
+type TabKey = "code-explainer" | "product-architect" | "ui-builder" | "recruiter-matcher";
 
 const TABS: { id: TabKey; label: string; icon: typeof Code2 }[] = [
-  { id: "code-explainer", label: "Code Explainer & Optimizer", icon: Code2 },
+  { id: "code-explainer", label: "Code Optimizer", icon: Code2 },
   { id: "product-architect", label: "Product Blueprint", icon: Cpu },
+  { id: "ui-builder", label: "UI Builder & Sandbox", icon: Palette },
   { id: "recruiter-matcher", label: "Recruiter Matcher", icon: UserCheck },
 ];
 
@@ -66,6 +70,21 @@ const SAMPLE_JDS = [
   "Lead Frontend Developer skilled in Tailwind CSS v4, Framer Motion animations, real-time dashboards, and WebGL integration.",
 ];
 
+const SAMPLE_UI_PROMPTS = [
+  "Glassmorphism SaaS Pricing Card with Monthly/Yearly toggle & glowing CTA",
+  "Dark Theme Analytics Dashboard Hero Card with live sparkline stats & ping badge",
+  "Cyberpunk E-Commerce Product Card with size selector & gradient borders",
+  "Neumorphic Task Kanban Card with priority tags & drag handles",
+];
+
+function extractHtmlCode(text: string): string | null {
+  const match = text.match(/```html([\s\S]*?)```/i);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return null;
+}
+
 export default function AILabPage(): ReactNode {
   const [activeTab, setActiveTab] = useState<TabKey>("code-explainer");
 
@@ -73,6 +92,7 @@ export default function AILabPage(): ReactNode {
   const [codeSnippet, setCodeSnippet] = useState<string>(SAMPLE_CODE);
   const [productIdea, setProductIdea] = useState<string>(SAMPLE_IDEAS[0] || "");
   const [jobDescription, setJobDescription] = useState<string>(SAMPLE_JDS[0] || "");
+  const [uiPrompt, setUiPrompt] = useState<string>(SAMPLE_UI_PROMPTS[0] || "");
 
   // Results, Streaming & Loading
   const [loading, setLoading] = useState(false);
@@ -80,6 +100,7 @@ export default function AILabPage(): ReactNode {
   const [streamedOutput, setStreamedOutput] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [outputViewMode, setOutputViewMode] = useState<"preview" | "code">("preview");
 
   const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const outputContainerRef = useRef<HTMLDivElement>(null);
@@ -192,7 +213,7 @@ export default function AILabPage(): ReactNode {
 
       {/* Tabs Navigation Bar */}
       <FadeIn delay={0.08} className="mb-8 flex justify-center w-full">
-        <div className="relative flex w-full max-w-xl sm:w-auto flex-col sm:flex-row items-stretch sm:items-center justify-center gap-1.5 rounded-2xl border border-foreground/12 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
+        <div className="relative grid grid-cols-2 sm:grid-cols-4 w-full max-w-3xl items-center justify-center gap-1.5 rounded-2xl border border-foreground/12 bg-background/90 p-1.5 shadow-sm backdrop-blur-xl">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -203,7 +224,7 @@ export default function AILabPage(): ReactNode {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => handleTabChange(tab.id)}
-                className={`relative z-10 flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer select-none ${
+                className={`relative z-10 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-3.5 py-2.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer select-none text-center ${
                   isActive
                     ? "text-background"
                     : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
@@ -217,7 +238,7 @@ export default function AILabPage(): ReactNode {
                   />
                 )}
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">{tab.label}</span>
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
@@ -379,6 +400,67 @@ export default function AILabPage(): ReactNode {
                 </motion.div>
               )}
 
+              {activeTab === "ui-builder" && (
+                <motion.div
+                  key="ui-builder"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="flex flex-col gap-4"
+                >
+                  <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-indigo-500" />
+                    Describe UI Component / Layout Concept
+                  </label>
+
+                  <textarea
+                    data-lenis-prevent
+                    rows={6}
+                    value={uiPrompt}
+                    onChange={(e) => setUiPrompt(e.target.value)}
+                    placeholder="e.g. Glassmorphism SaaS Pricing Card with Monthly/Yearly toggle..."
+                    style={{ touchAction: "pan-y" }}
+                    className="w-full rounded-2xl border border-foreground/15 bg-foreground/[0.03] p-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/30 focus:outline-none resize-none leading-relaxed shadow-inner overflow-y-auto scrollbar-thin max-h-48 overscroll-contain"
+                  />
+
+                  <div>
+                    <span className="block text-[12px] font-semibold text-foreground/70 mb-2">
+                      Preset UI Concepts:
+                    </span>
+                    <div className="flex flex-col gap-2">
+                      {SAMPLE_UI_PROMPTS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          type="button"
+                          onClick={() => setUiPrompt(prompt)}
+                          className={`text-left rounded-xl border p-3 text-xs font-medium transition-all cursor-pointer ${
+                            uiPrompt === prompt
+                              ? "border-foreground/30 bg-foreground/10 text-foreground font-semibold"
+                              : "border-foreground/10 bg-foreground/[0.02] text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                          }`}
+                        >
+                          🎨 {prompt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={loading || !(uiPrompt || "").trim()}
+                    onClick={() => runTool("ui-builder", uiPrompt || "")}
+                    className="group relative flex items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-semibold text-background shadow-lg transition-all hover:opacity-95 disabled:opacity-40 cursor-pointer overflow-hidden"
+                  >
+                    {loading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Palette className="h-4 w-4 transition-transform group-hover:scale-110" />
+                    )}
+                    {loading ? "Building Component UI..." : "Build Component & Live Sandbox"}
+                  </button>
+                </motion.div>
+              )}
+
               {activeTab === "recruiter-matcher" && (
                 <motion.div
                   key="recruiter"
@@ -445,7 +527,7 @@ export default function AILabPage(): ReactNode {
           {/* Right Column - ChatGPT-Style Streamed Output Display */}
           <div className="rounded-3xl border border-foreground/12 bg-background/95 p-3.5 sm:p-6 shadow-md backdrop-blur-xl flex flex-col gap-4 min-h-[500px]">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-foreground/10 pb-3.5">
+            <div className="flex flex-wrap items-center justify-between border-b border-foreground/10 pb-3.5 gap-2">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-foreground text-background shadow-xs">
                   <Bot className="h-4 w-4" />
@@ -464,6 +546,34 @@ export default function AILabPage(): ReactNode {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* View Mode Switcher for UI Builder & HTML outputs */}
+                {extractHtmlCode(streamedOutput) && (
+                  <div className="flex items-center rounded-xl border border-foreground/15 bg-foreground/5 p-1 text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setOutputViewMode("preview")}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 transition-all cursor-pointer ${
+                        outputViewMode === "preview"
+                          ? "bg-foreground text-background shadow-xs font-bold"
+                          : "text-foreground/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Eye className="h-3 w-3" /> Live Sandbox
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOutputViewMode("code")}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 transition-all cursor-pointer ${
+                        outputViewMode === "code"
+                          ? "bg-foreground text-background shadow-xs font-bold"
+                          : "text-foreground/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Code className="h-3 w-3" /> Code & Specs
+                    </button>
+                  </div>
+                )}
+
                 {isStreaming && (
                   <button
                     type="button"
@@ -515,7 +625,14 @@ export default function AILabPage(): ReactNode {
                 </div>
               ) : streamedOutput ? (
                 <div className="space-y-3 font-sans text-xs sm:text-sm leading-relaxed">
-                  <RenderRichMarkdown text={streamedOutput} />
+                  {outputViewMode === "preview" && extractHtmlCode(streamedOutput) ? (
+                    <div className="flex flex-col gap-4">
+                      <IframeLivePreview htmlCode={extractHtmlCode(streamedOutput)!} />
+                      <RenderRichMarkdown text={streamedOutput} />
+                    </div>
+                  ) : (
+                    <RenderRichMarkdown text={streamedOutput} />
+                  )}
                   {isStreaming && (
                     <span className="inline-block h-4 w-2 bg-amber-500 animate-pulse ml-1 align-middle rounded-xs" />
                   )}
@@ -527,7 +644,7 @@ export default function AILabPage(): ReactNode {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-foreground">Select a tool on the left and click analyze.</p>
-                    <p className="text-[11px] text-foreground/40 mt-1">ChatGPT-style streaming character output will render live here.</p>
+                    <p className="text-[11px] text-foreground/40 mt-1">ChatGPT-style streaming character output & live sandbox will render here.</p>
                   </div>
                 </div>
               )}
@@ -546,6 +663,59 @@ export default function AILabPage(): ReactNode {
         </div>
       </FadeIn>
     </main>
+  );
+}
+
+// Live Iframe Renderer for Tailwind CSS UI Components
+function IframeLivePreview({ htmlCode }: { htmlCode: string }): ReactNode {
+  const srcDoc = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    ${htmlCode}
+  </body>
+</html>`;
+
+  return (
+    <div className="w-full rounded-2xl border border-foreground/15 bg-slate-950/90 overflow-hidden shadow-inner flex flex-col my-2">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 bg-slate-900/80">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+          <span className="ml-2 text-[11px] font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            Live Tailwind CSS Component Sandbox
+          </span>
+        </div>
+        <span className="text-[10px] font-mono text-slate-400">Interactive Preview</span>
+      </div>
+
+      <div className="p-3 sm:p-6 bg-slate-950/60 min-h-[320px] flex items-center justify-center overflow-auto">
+        <iframe
+          title="UI Component Live Preview"
+          srcDoc={srcDoc}
+          className="w-full h-80 sm:h-96 border-0 rounded-xl bg-transparent"
+          sandbox="allow-scripts"
+        />
+      </div>
+    </div>
   );
 }
 

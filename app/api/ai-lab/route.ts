@@ -159,6 +159,34 @@ A compelling 3-paragraph outreach pitch written on behalf of Shohid.`;
       return NextResponse.json({ result: dynamicResult });
     }
 
+    // 4. UI COMPONENT & TAILWIND BUILDER
+    if (tool === "ui-builder") {
+      if (apiKey) {
+        try {
+          const prompt = `You are a Principal UI/UX Architect and Tailwind CSS Specialist. Generate a production-ready, visually stunning UI component based on the user's prompt.
+
+User UI Concept: "${input}"
+
+You MUST output two clear sections:
+1. ### 🎨 Component Live Sandbox Code
+Provide a complete, self-contained HTML block inside a \`\`\`html\`\`\` code fence. Use Tailwind CSS classes for layout, glassmorphism (e.g. bg-slate-900/80 backdrop-blur-xl border border-white/10 text-slate-100 rounded-3xl shadow-2xl p-6 sm:p-8), gradients, typography, hover transitions, and interactive controls (such as toggles, buttons with onClick handlers or hover states, icons via inline SVG).
+
+2. ### 🖌️ Design System & Tailwind Specs
+- **Color Token Rationale:** Describe palette choices (slate, emerald, amber, glass accents).
+- **Layout & Structure:** Explain flex/grid arrangement and responsive breakpoints.
+- **Micro-Animations & Interactivity:** Highlight hover states, backdrop filters, and badge indicators.`;
+
+          const resultText = await callGeminiApi(apiKey, prompt);
+          if (resultText) return NextResponse.json({ result: resultText });
+        } catch (e) {
+          console.warn("AI Lab Gemini call failed, using dynamic UI component generator:", e);
+        }
+      }
+
+      const dynamicResult = generateDynamicUIComponent(input);
+      return NextResponse.json({ result: dynamicResult });
+    }
+
     return NextResponse.json({ error: "Invalid tool specified." }, { status: 400 });
   } catch (error) {
     console.error("Error in /api/ai-lab route:", error);
@@ -571,3 +599,108 @@ ${detectedTechs.map((tech) => `- ✅ **${tech}:** Production-proven expertise in
 ### ✉️ Customized Pitch to Hiring Team
 *"Dear Hiring Team,\n\nI reviewed your job description and noted your focus on ${detectedTechs.slice(0, 3).join(", ")}. As a Full-Stack Engineer and Project Lead, I specialize in building high-performance Next.js 16 and React 19 applications with real-time data integration.\n\nHaving recently delivered complex platforms like FleetOS and Model Boss Offers, I am confident I can bring immediate impact to your engineering team.\n\nBest regards,\nShohidullah"*`;
 }
+
+// ----------------------------------------------------------------------
+// Dynamic UI Component Generator (Tailwind CSS & Glassmorphism Sandbox)
+// ----------------------------------------------------------------------
+function generateDynamicUIComponent(input: string): string {
+  const promptLower = input.toLowerCase();
+
+  let title = "Glassmorphism SaaS Pricing Card";
+  let componentHtml = `<div class="max-w-sm mx-auto rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-8 shadow-2xl backdrop-blur-xl text-slate-100 font-sans transition-all duration-300 hover:border-emerald-500/40 hover:shadow-emerald-500/10">
+  <div class="flex items-center justify-between">
+    <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">Pro Tier</span>
+    <span class="text-xs text-slate-400">Save 20% Yearly</span>
+  </div>
+
+  <div class="mt-4">
+    <h3 class="text-2xl font-bold tracking-tight text-white">Enterprise AI Engine</h3>
+    <p class="mt-1 text-xs text-slate-400 leading-relaxed">Dedicated GPU cluster with zero-latency streaming pipelines.</p>
+  </div>
+
+  <div class="my-6 flex items-baseline gap-1 border-y border-white/10 py-4">
+    <span class="text-4xl font-extrabold text-white">$49</span>
+    <span class="text-xs text-slate-400 font-medium">/ month</span>
+  </div>
+
+  <ul class="space-y-3 text-xs text-slate-300">
+    <li class="flex items-center gap-2">
+      <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span>Unlimited Gemini 2.5 Neural Queries</span>
+    </li>
+    <li class="flex items-center gap-2">
+      <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span>Sub-50ms WebSockets Real-Time Sync</span>
+    </li>
+    <li class="flex items-center gap-2">
+      <svg class="h-4 w-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      <span>Priority ERD & AST Code Optimizer</span>
+    </li>
+  </ul>
+
+  <button type="button" class="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3 text-xs font-bold text-slate-950 shadow-lg transition-all hover:brightness-110 active:scale-95 cursor-pointer">
+    Start 14-Day Free Trial →
+  </button>
+</div>`;
+
+  if (promptLower.includes("dashboard") || promptLower.includes("stat") || promptLower.includes("analytic")) {
+    title = "Dark Theme Analytics Dashboard Hero Card";
+    componentHtml = `<div class="max-w-md mx-auto rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl backdrop-blur-2xl text-slate-100 font-sans">
+  <div class="flex items-center justify-between border-b border-white/10 pb-4">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total API Bandwidth</p>
+      <h3 class="text-2xl font-bold text-white mt-0.5">2.4M Req/sec</h3>
+    </div>
+    <span class="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
+      ↑ +14.2%
+    </span>
+  </div>
+
+  <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
+    <span>Live WebSocket Stream</span>
+    <span class="flex items-center gap-1.5 font-mono text-emerald-400">
+      <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+      Active (12ms)
+    </span>
+  </div>
+
+  <div class="mt-4 flex items-end justify-between gap-1.5 h-20 pt-2">
+    <div class="w-full bg-slate-800 rounded-t h-[40%] hover:bg-emerald-500 transition-colors"></div>
+    <div class="w-full bg-slate-800 rounded-t h-[65%] hover:bg-emerald-500 transition-colors"></div>
+    <div class="w-full bg-slate-800 rounded-t h-[50%] hover:bg-emerald-500 transition-colors"></div>
+    <div class="w-full bg-slate-800 rounded-t h-[85%] hover:bg-emerald-500 transition-colors"></div>
+    <div class="w-full bg-emerald-500/80 rounded-t h-[100%] shadow-lg shadow-emerald-500/20"></div>
+  </div>
+</div>`;
+  } else if (promptLower.includes("product") || promptLower.includes("e-commerce") || promptLower.includes("card")) {
+    title = "Cyberpunk E-Commerce Product Card";
+    componentHtml = `<div class="max-w-xs mx-auto rounded-3xl border border-indigo-500/20 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-xl text-slate-100 font-sans group">
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900/40 to-slate-800/60 p-6 text-center border border-white/5">
+    <div class="absolute top-3 right-3 rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[10px] font-bold text-indigo-300 border border-indigo-500/30">NEW</div>
+    <div class="my-4 text-4xl transform group-hover:scale-110 transition-transform">⚡</div>
+    <h4 class="text-sm font-bold text-white tracking-wide">Neural VR Headset v2</h4>
+  </div>
+
+  <div class="mt-4 flex items-center justify-between">
+    <div>
+      <span class="text-xs text-slate-400 line-through">$399</span>
+      <p class="text-lg font-extrabold text-indigo-400">$299.00</p>
+    </div>
+    <button type="button" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-500 transition-all cursor-pointer">
+      Buy Now
+    </button>
+  </div>
+</div>`;
+  }
+
+  return `### 🎨 Component Live Sandbox Code: ${title}
+\`\`\`html
+${componentHtml}
+\`\`\`
+
+### 🖌️ Design System & Tailwind Specs
+- **Color Palette & Contrast:** Slate-900 dark theme base with HSL glassmorphism layers (\`bg-slate-900/80\`, \`backdrop-blur-xl\`).
+- **Typography & Layout:** Clean responsive layout, clear visual hierarchy, bold headings, and high contrast body text.
+- **Micro-Animations:** Hover borders, scale transforms (\`group-hover:scale-110\`), glowing badges, and transition duration modifiers (\`duration-300\`).`;
+}
+
