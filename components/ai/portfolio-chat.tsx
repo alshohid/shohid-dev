@@ -15,7 +15,44 @@ import {
   ExternalLink,
   MessageSquare,
   Wand2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Square,
 } from "lucide-react";
+
+// Browser Web Speech API type declarations
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInstance;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
 
 type Message = {
   id: string;
@@ -117,10 +154,16 @@ export function PortfolioChat(): ReactNode {
     {
       id: "welcome",
       sender: "ai",
-      text: "👋 Hi there! I'm **Shohid AI**.\n\nAsk me anything about Shohid's expertise in **Next.js 16**, **React 19**, **TypeScript**, **Real-Time WebSockets**, or his featured projects like **FleetOS** & **Game Arena X**!",
+      text: "👋 Hi there! I'm **Shohid AI Voice Agent**.\n\nYou can talk to me via microphone or text about Shohid's expertise in **Next.js 16**, **React 19**, **TypeScript**, **WebSockets**, or projects like **FleetOS**!",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
+
+  // Voice Assistant State
+  const [isListening, setIsListening] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -134,6 +177,9 @@ export function PortfolioChat(): ReactNode {
     if (isOpen) {
       scrollToBottom(false);
       setTimeout(() => inputRef.current?.focus(), 200);
+    } else {
+      stopSpeaking();
+      if (isListening) recognitionRef.current?.stop();
     }
   }, [isOpen]);
 
@@ -148,6 +194,96 @@ export function PortfolioChat(): ReactNode {
     if (!el) return;
     const isFarFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight > 120;
     setShowScrollBottomBtn(isFarFromBottom);
+  };
+
+  const stopSpeaking = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setSpeakingMsgId(null);
+  };
+
+  const speakText = (text: string, msgId: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    if (speakingMsgId === msgId) {
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    const cleanText = text
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/[*_`#]/g, "")
+      .replace(/👋|⚡|🚀|💼|📫|🎯|🌟|✉️|📌|✅|📋/g, "");
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice =
+      voices.find(
+        (v) =>
+          (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel")) &&
+          v.lang.startsWith("en")
+      ) || voices.find((v) => v.lang.startsWith("en"));
+
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    utterance.onstart = () => setSpeakingMsgId(msgId);
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleListening = () => {
+    if (typeof window === "undefined") return;
+
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRec) {
+      alert("Speech recognition is not supported in your current browser. Please type your message.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRec();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0]?.transcript || "")
+          .join("");
+        setInput(transcript);
+      };
+
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        console.warn("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setIsListening(false);
+    }
   };
 
   const handleSend = async (userQuery?: string) => {
@@ -180,13 +316,19 @@ export function PortfolioChat(): ReactNode {
       });
 
       const data = await res.json();
+      const replyText = data.reply || "Sorry, I encountered an issue. Please try again.";
+      const aiMsgId = (Date.now() + 1).toString();
       const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
+        id: aiMsgId,
         sender: "ai",
-        text: data.reply || "Sorry, I encountered an issue. Please try again.",
+        text: replyText,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, aiMsg]);
+
+      if (isVoiceEnabled) {
+        speakText(replyText, aiMsgId);
+      }
     } catch (err) {
       console.error("Failed to fetch AI chat reply", err);
       setMessages((prev) => [
@@ -204,6 +346,7 @@ export function PortfolioChat(): ReactNode {
   };
 
   const clearChat = () => {
+    stopSpeaking();
     setMessages([
       {
         id: "welcome",
@@ -222,7 +365,7 @@ export function PortfolioChat(): ReactNode {
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.92 }}
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="Open Shohid AI Assistant"
+          aria-label="Open Shohid AI Voice Assistant"
           className="group relative flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_10px_30px_rgba(0,0,0,0.3)] ring-2 ring-foreground/20 backdrop-blur-md transition-all duration-300 cursor-pointer"
         >
           {/* Subtle Ambient Pulse Ring */}
@@ -260,7 +403,7 @@ export function PortfolioChat(): ReactNode {
         </motion.button>
       </div>
 
-      {/* Floating Chat Modal Panel (Bottom-Sheet Attached on Mobile, Desktop Floating) */}
+      {/* Floating Chat Modal Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -286,14 +429,32 @@ export function PortfolioChat(): ReactNode {
                     Shohid AI
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9.5px] font-semibold text-emerald-600 dark:text-emerald-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      v2.5 Live Core
+                      Voice Agent
                     </span>
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] text-foreground/60">Portfolio & Tech Assistant</p>
+                  <p className="text-[10px] sm:text-[11px] text-foreground/60">Voice & Text Portfolio Assistant</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-1">
+                {/* Voice Audio Mode Toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !isVoiceEnabled;
+                    setIsVoiceEnabled(next);
+                    if (!next) stopSpeaking();
+                  }}
+                  title={isVoiceEnabled ? "Voice Mode ON (Click to mute)" : "Voice Mode OFF (Click to enable auto-speech)"}
+                  className={`rounded-xl p-1.5 sm:p-2 transition-all cursor-pointer ${
+                    isVoiceEnabled
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                      : "text-foreground/50 hover:bg-foreground/8 hover:text-foreground"
+                  }`}
+                >
+                  {isVoiceEnabled ? <Volume2 className="h-4 w-4 animate-pulse" /> : <VolumeX className="h-4 w-4" />}
+                </button>
+
                 <button
                   type="button"
                   onClick={clearChat}
@@ -352,15 +513,37 @@ export function PortfolioChat(): ReactNode {
                     }`}
                   >
                     <FormattedText text={msg.text} />
-                    <span
-                      className={`block mt-1 text-[9px] sm:text-[9.5px] font-mono tracking-wider opacity-60 ${
-                        msg.sender === "user"
-                          ? "text-right text-background/80"
-                          : "text-left text-foreground/50"
-                      }`}
-                    >
-                      {msg.time}
-                    </span>
+                    <div className="flex items-center justify-between gap-2 mt-1">
+                      <span
+                        className={`block text-[9px] sm:text-[9.5px] font-mono tracking-wider opacity-60 ${
+                          msg.sender === "user"
+                            ? "text-right text-background/80"
+                            : "text-left text-foreground/50"
+                        }`}
+                      >
+                        {msg.time}
+                      </span>
+
+                      {/* Listen to Voice Audio Button on AI message */}
+                      {msg.sender === "ai" && (
+                        <button
+                          type="button"
+                          onClick={() => speakText(msg.text, msg.id)}
+                          title={speakingMsgId === msg.id ? "Stop voice audio" : "Listen to audio response"}
+                          className={`p-1 rounded-full transition-all cursor-pointer ${
+                            speakingMsgId === msg.id
+                              ? "bg-amber-500 text-background animate-pulse"
+                              : "text-foreground/40 hover:text-foreground hover:bg-foreground/10"
+                          }`}
+                        >
+                          {speakingMsgId === msg.id ? (
+                            <Square className="h-3 w-3 fill-current" />
+                          ) : (
+                            <Volume2 className="h-3 w-3" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {msg.sender === "user" && (
@@ -423,6 +606,23 @@ export function PortfolioChat(): ReactNode {
 
             {/* Input Form Bar */}
             <div className="p-2.5 sm:p-3 border-t border-foreground/10 bg-background shrink-0">
+              {/* Listening Active Banner */}
+              {isListening && (
+                <div className="flex items-center justify-between px-3 py-1.5 mb-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-semibold animate-pulse">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                    🎙️ Listening... Speak your question now
+                  </span>
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    className="text-[10px] underline font-bold"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -435,10 +635,29 @@ export function PortfolioChat(): ReactNode {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about Shohid's skills or projects..."
+                  placeholder={isListening ? "Listening to your voice..." : "Ask or speak to Shohid AI..."}
                   disabled={loading}
                   className="flex-1 bg-transparent text-xs sm:text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
                 />
+
+                {/* Microphone Speech-to-Text Button */}
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  title={isListening ? "Stop voice recording" : "Speak using microphone"}
+                  className={`flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl transition-all cursor-pointer ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse ring-2 ring-red-400"
+                      : "bg-foreground/10 text-foreground hover:bg-foreground/20"
+                  }`}
+                >
+                  {isListening ? (
+                    <MicOff className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  ) : (
+                    <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-foreground/80" />
+                  )}
+                </button>
+
                 <button
                   type="submit"
                   disabled={!input.trim() || loading}
@@ -449,7 +668,7 @@ export function PortfolioChat(): ReactNode {
               </form>
               <div className="mt-1 flex items-center justify-between px-1 text-[9.5px] sm:text-[10px] font-medium text-foreground/40">
                 <span className="flex items-center gap-1">
-                  <MessageSquare className="h-2.5 w-2.5" /> Direct portfolio QA
+                  <MessageSquare className="h-2.5 w-2.5" /> Mic or text AI QA
                 </span>
                 <span>Press Enter ↵</span>
               </div>

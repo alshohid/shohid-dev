@@ -2,6 +2,28 @@ import { SHOHID_PROFILE } from "@/lib/ai";
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
+async function callGeminiApi(apiKey: string, prompt: string): Promise<string | null> {
+  const candidateModels = [
+    "gemini-flash-latest",
+    "gemma-4-26b-a4b-it",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+  ];
+  const ai = new GoogleGenAI({ apiKey });
+  for (const modelName of candidateModels) {
+    try {
+      const res = await ai.models.generateContent({
+        model: modelName,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+      if (res.text) return res.text;
+    } catch (e) {
+      console.warn(`AI Lab Gemini call failed with model ${modelName}, trying fallback:`, e);
+    }
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const { tool, input } = await req.json();
@@ -19,7 +41,6 @@ export async function POST(req: Request) {
     if (tool === "code-explainer") {
       if (apiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey });
           const prompt = `You are an elite Senior Staff Engineer and Systems Architect. Analyze the following user-submitted code snippet with high technical accuracy.
 
 Code Snippet:
@@ -44,11 +65,8 @@ Identify memory leaks, unhandled re-renders, missing cleanups, or type-safety is
 ### 🛠️ Refactored & Optimized Production Code
 Provide an optimized, clean, production-grade rewrite in a code block with explanatory comments.`;
 
-          const res = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-          });
-          if (res.text) return NextResponse.json({ result: res.text });
+          const resultText = await callGeminiApi(apiKey, prompt);
+          if (resultText) return NextResponse.json({ result: resultText });
         } catch (e) {
           console.warn("AI Lab Gemini call failed, falling back to dynamic parser:", e);
         }
@@ -62,7 +80,6 @@ Provide an optimized, clean, production-grade rewrite in a code block with expla
     if (tool === "product-architect") {
       if (apiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey });
           const prompt = `You are a Principal Enterprise Database Architect & Systems Designer. You are tasked with generating a 100% accurate, highly specific, production-grade architectural blueprint for the following concept:
 
 Product Concept: "${input}"
@@ -92,11 +109,8 @@ List 3-4 REST/gRPC endpoints and bi-directional WebSocket channels specifically 
 ### 🛡️ Security, Rate Limiting & Scalability Strategy
 Explain JWT session handling, Redis sliding-window rate limiting, CDN caching, and scaling bottlenecks.`;
 
-          const res = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-          });
-          if (res.text) return NextResponse.json({ result: res.text });
+          const resultText = await callGeminiApi(apiKey, prompt);
+          if (resultText) return NextResponse.json({ result: resultText });
         } catch (e) {
           console.warn("AI Lab Gemini call failed, using dynamic blueprint generator:", e);
         }
@@ -110,7 +124,6 @@ Explain JWT session handling, Redis sliding-window rate limiting, CDN caching, a
     if (tool === "recruiter-matcher") {
       if (apiKey) {
         try {
-          const ai = new GoogleGenAI({ apiKey });
           const prompt = `You are a Tech Talent Executive and Senior Engineering Director. Compare the following user-submitted Job Description (JD) with Shohid's profile:
 
 Shohid's Profile:
@@ -135,11 +148,8 @@ Connect 2-3 of Shohid's projects (FleetOS, Model Boss Offers, Game Arena X, Isco
 ### ✉️ Customized Pitch to Hiring Team
 A compelling 3-paragraph outreach pitch written on behalf of Shohid.`;
 
-          const res = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-          });
-          if (res.text) return NextResponse.json({ result: res.text });
+          const resultText = await callGeminiApi(apiKey, prompt);
+          if (resultText) return NextResponse.json({ result: resultText });
         } catch (e) {
           console.warn("AI Lab Gemini call failed, using dynamic recruiter matcher:", e);
         }

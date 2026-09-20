@@ -73,8 +73,11 @@ export const SHOHID_PROFILE = {
 };
 
 const SYSTEM_PROMPT = `
-You are "Shohid AI", an intelligent, friendly personal assistant representing Shohidullah (Shohid).
-Your job is to answer portfolio visitors, recruiters, and clients about Shohid's skills, experience, projects, tech stack, and contact availability.
+You are "Shohid AI", an intelligent, friendly, and versatile AI assistant representing Shohidullah (Shohid).
+
+Core Responsibilities:
+1. Portfolio Representative: Help visitors, recruiters, and clients learn about Shohid's skills, experience, projects, tech stack, and contact/hiring availability.
+2. General AI Assistant: You MUST also answer ANY general question (such as general knowledge, science, animals like cows, coding, math, history, everyday facts) thoroughly, accurately, and naturally.
 
 Shohid's Profile:
 - Name: ${SHOHID_PROFILE.name}
@@ -86,11 +89,11 @@ ${SHOHID_PROFILE.projects.map(p => `  * ${p.name} (${p.role}): ${p.description}.
 - Contact & Status: ${SHOHID_PROFILE.contact.availability} | GitHub: ${SHOHID_PROFILE.contact.github}
 
 Instructions:
-- Be warm, concise, professional, and slightly enthusiast about modern web technology & AI.
-- You can answer in English or Bengali depending on the user's input language.
-- Format responses nicely using Markdown (bullet points, bold text).
-- Always encourage visitors to explore his projects page or reach out for collaboration.
-- If asked about non-portfolio topics, politely pivot back to Shohid's expertise.
+- Be warm, concise, professional, and helpful.
+- You can answer in English, Bengali, or Banglish depending on the user's input language.
+- Format responses nicely using Markdown (bullet points, bold text, code blocks where appropriate).
+- Do NOT refuse or ignore non-portfolio questions! Answer general questions (e.g., "do you know about cow?", science, technology, general advice) comprehensively and directly.
+- If relevant, feel free to add a gentle closing line reminding users they can also ask about Shohid's projects or tech stack.
 `;
 
 export async function generatePortfolioResponse(
@@ -100,32 +103,41 @@ export async function generatePortfolioResponse(
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (apiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const contents = [
-        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "model", parts: [{ text: "Understood! I am Shohid AI, ready to assist portfolio visitors with accurate information about Shohid's expertise and projects." }] },
-        ...history.map(h => ({
-          role: h.role === "user" ? "user" : "model",
-          parts: [{ text: h.text }]
-        })),
-        { role: "user", parts: [{ text: userMessage }] }
-      ];
+    const candidateModels = [
+      "gemini-flash-latest",
+      "gemma-4-26b-a4b-it",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+    ];
 
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents,
-      });
+    const ai = new GoogleGenAI({ apiKey });
+    const contents = [
+      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+      { role: "model", parts: [{ text: "Understood! I am Shohid AI, ready to assist portfolio visitors with accurate information about Shohid's expertise and projects, as well as answering any general knowledge or random questions." }] },
+      ...history.map(h => ({
+        role: h.role === "user" ? "user" : "model",
+        parts: [{ text: h.text }]
+      })),
+      { role: "user", parts: [{ text: userMessage }] }
+    ];
 
-      if (response.text) {
-        return response.text;
+    for (const modelName of candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents,
+        });
+
+        if (response.text) {
+          return response.text;
+        }
+      } catch (err) {
+        console.warn(`Gemini API call failed with model ${modelName}, trying fallback model:`, err);
       }
-    } catch (err) {
-      console.warn("Gemini API call failed, falling back to rule-based assistant response:", err);
     }
   }
 
-  // Smart fallback response when GEMINI_API_KEY is not set or API call fails
+  // Fallback response when GEMINI_API_KEY is not set or all live API calls fail
   const query = userMessage.toLowerCase();
   
   if (query.includes("skill") || query.includes("tech") || query.includes("stack") || query.includes("কি পারো") || query.includes("দক্ষতা")) {
@@ -153,5 +165,5 @@ export async function generatePortfolioResponse(
       `💬 You can also send a direct note via the Contact section on the homepage!`;
   }
 
-  return `Hello! I'm **Shohid AI**. I can tell you all about Shohid's engineering background, full-stack projects (FleetOS, Game Arena X, Model Boss Offers), tech stack (Next.js 16, React 19, TypeScript, Tailwind, GSAP), and availability for hire.\n\nWhat would you like to know?`;
+  return `Hello! I'm **Shohid AI**. I can answer any general knowledge questions, as well as tell you all about Shohid's engineering background, projects (FleetOS, Game Arena X, Model Boss Offers), tech stack, and availability for hire.\n\nWhat would you like to know?`;
 }
